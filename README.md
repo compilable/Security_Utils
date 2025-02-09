@@ -15,7 +15,7 @@ Can use the password to generate the HMAC on the generated hashes.
 python3 password_hash_gen.py
 ```
 
-![Password hash generator GUI v1.0.0](image-url)
+![Password hash generator GUI v1.0.0](https://raw.githubusercontent.com/compilable/Security_Utils/refs/heads/main/res/screenshot_password_hash_gen_v1.0.0.png)
 
 ### ToDO:
 - Create a make file / bash script to generate the `pyinstaller` .
