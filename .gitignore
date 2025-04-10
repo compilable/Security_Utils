@@ -9,7 +9,6 @@ __pycache__/
 bin/
 build/
 develop-eggs/
-dist/
 eggs/
 lib/
 lib64/
@@ -49,3 +48,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# remove spec
+*.spec

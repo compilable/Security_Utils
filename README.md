@@ -1,4 +1,4 @@
-# Security Utils (v.1.0.0)
+# Security Utils
 
 ## Development Setup:
 - Setup the venv:
