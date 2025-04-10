@@ -7,10 +7,11 @@
 read -p "Version : " version
 echo "Building the Password Hash Gen $version."
 
-pyinstaller password_hash_gen.py --onefile --name "Password Hash Gen $version" --add-data="README.md:." 
+pyinstaller password_hash_gen.py --name "password_hash_gen$version"
+
+
+zip -r "dist/password_hash_gen$version".zip "dist/password_hash_gen$version"
+
+rm -rf "dist/password_hash_gen$version"
 
 echo "Build process for the Password Hash Gen $version is completed."
-
-zip dist/"Password Hash Gen $version".zip "dist/Password Hash Gen $version"
-
-rm dist/"Password Hash Gen $version"
