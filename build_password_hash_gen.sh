@@ -10,3 +10,7 @@ echo "Building the Password Hash Gen $version."
 pyinstaller password_hash_gen.py --onefile --name "Password Hash Gen $version" --add-data="README.md:." 
 
 echo "Build process for the Password Hash Gen $version is completed."
+
+zip dist/"Password Hash Gen $version".zip "dist/Password Hash Gen $version"
+
+rm dist/"Password Hash Gen $version"
