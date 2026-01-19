@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>dev.secutils.SecurityUtils</id>
+    <metadata_license>MIT</metadata_license>
+    <project_license>MIT</project_license>
+    <name>Security Utilities</name>
+    <summary>Web-based security tools for developers and security professionals</summary>
+    
+    <description>
+        <p>
+            Security Utilities is a comprehensive collection of web-based security tools designed for developers, 
+            security professionals, and system administrators. The application provides an intuitive dashboard 
+            interface for accessing various security-focused utilities.
+        </p>
+        <p>Features include:</p>
+        <ul>
+            <li>Password Hash Generator with support for multiple algorithms (bcrypt, Argon2, scrypt)</li>
+            <li>Image File Randomizer for forensic data obfuscation</li>
+            <li>Secure file upload and processing capabilities</li>
+            <li>Dark/Light theme support with user preference persistence</li>
+            <li>Content Security Policy compliance for enhanced security</li>
+            <li>CSRF protection and rate limiting for secure operations</li>
+        </ul>
+        <p>
+            The application runs as a local web server, providing a modern web interface while maintaining 
+            complete data privacy by processing everything locally on your machine.
+        </p>
+    </description>
+    
+    <launchable type="desktop-id">dev.secutils.SecurityUtils.desktop</launchable>
+    
+    <provides>
+        <binary>security-utils</binary>
+    </provides>
+    
+    <screenshots>
+        <screenshot type="default">
+            <caption>Security Utilities Dashboard</caption>
+            <image>https://raw.githubusercontent.com/security-utils/screenshots/main/dashboard.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Password Hash Generator</caption>
+            <image>https://raw.githubusercontent.com/security-utils/screenshots/main/password-generator.png</image>
+        </screenshot>
+        <screenshot>
+            <caption>Image Randomizer Tool</caption>
+            <image>https://raw.githubusercontent.com/security-utils/screenshots/main/image-randomizer.png</image>
+        </screenshot>
+    </screenshots>
+    
+    <url type="homepage">https://github.com/compilable/Security_Utils</url>
+    <url type="bugtracker">https://github.com/compilable/Security_Utils/issues</url>
+    <url type="help">https://github.com/compilable/Security_Utils/wiki</url>
+    <url type="donation">https://github.com/sponsors/compilable</url>
+    
+    <releases>
+        <release version="1.0.0" date="2024-01-15">
+            <description>
+                <p>Initial release of Security Utilities</p>
+                <ul>
+                    <li>Password Hash Generator with multiple algorithm support</li>
+                    <li>Image File Randomizer for data obfuscation</li>
+                    <li>Modern responsive dashboard interface</li>
+                    <li>Comprehensive security hardening</li>
+                    <li>Docker and native installation support</li>
+                </ul>
+            </description>
+        </release>
+    </releases>
+    
+    <content_rating type="oars-1.1">
+        <content_attribute id="violence-cartoon">none</content_attribute>
+        <content_attribute id="violence-fantasy">none</content_attribute>
+        <content_attribute id="violence-realistic">none</content_attribute>
+        <content_attribute id="violence-bloodshed">none</content_attribute>
+        <content_attribute id="violence-sexual">none</content_attribute>
+        <content_attribute id="violence-desecration">none</content_attribute>
+        <content_attribute id="violence-slavery">none</content_attribute>
+        <content_attribute id="violence-worship">none</content_attribute>
+        <content_attribute id="drugs-alcohol">none</content_attribute>
+        <content_attribute id="drugs-narcotics">none</content_attribute>
+        <content_attribute id="drugs-tobacco">none</content_attribute>
+        <content_attribute id="sex-nudity">none</content_attribute>
+        <content_attribute id="sex-themes">none</content_attribute>
+        <content_attribute id="sex-homosexuality">none</content_attribute>
+        <content_attribute id="sex-prostitution">none</content_attribute>
+        <content_attribute id="sex-adultery">none</content_attribute>
+        <content_attribute id="sex-appearance">none</content_attribute>
+        <content_attribute id="language-profanity">none</content_attribute>
+        <content_attribute id="language-humor">none</content_attribute>
+        <content_attribute id="language-discrimination">none</content_attribute>
+        <content_attribute id="social-chat">none</content_attribute>
+        <content_attribute id="social-info">mild</content_attribute>
+        <content_attribute id="social-audio">none</content_attribute>
+        <content_attribute id="social-location">none</content_attribute>
+        <content_attribute id="social-contacts">none</content_attribute>
+        <content_attribute id="money-purchasing">none</content_attribute>
+        <content_attribute id="money-gambling">none</content_attribute>
+    </content_rating>
+</component>

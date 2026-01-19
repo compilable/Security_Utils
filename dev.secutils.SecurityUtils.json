@@ -1,0 +1,118 @@
+{
+    "app-id": "dev.secutils.SecurityUtils",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "23.08",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "security-utils",
+    "finish-args": [
+        "--socket=x11",
+        "--share=ipc",
+        "--socket=wayland",
+        "--device=dri",
+        "--share=network",
+        "--filesystem=host:create",
+        "--filesystem=xdg-download:rw",
+        "--talk-name=org.freedesktop.FileManager1",
+        "--own-name=org.mpris.MediaPlayer2.SecurityUtils",
+        "--socket=pulseaudio"
+    ],
+    "modules": [
+        {
+            "name": "php",
+            "buildsystem": "autotools",
+            "config-opts": [
+                "--enable-gd",
+                "--with-freetype",
+                "--with-jpeg",
+                "--with-png",
+                "--enable-fileinfo",
+                "--enable-session",
+                "--disable-cli",
+                "--enable-fpm"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://www.php.net/distributions/php-8.2.25.tar.gz",
+                    "sha256": "0d70b9d9f748b62e3d38bf4e9e9dd0e94b8c57f4dc2abe3ff0c1daaa6bd0159a"
+                }
+            ],
+            "modules": [
+                {
+                    "name": "libpng",
+                    "buildsystem": "cmake-ninja",
+                    "sources": [
+                        {
+                            "type": "git",
+                            "url": "https://git.code.sf.net/p/libpng/code",
+                            "tag": "v1.6.40"
+                        }
+                    ]
+                },
+                {
+                    "name": "libjpeg-turbo",
+                    "buildsystem": "cmake-ninja",
+                    "sources": [
+                        {
+                            "type": "git",
+                            "url": "https://github.com/libjpeg-turbo/libjpeg-turbo.git",
+                            "tag": "3.0.1"
+                        }
+                    ]
+                },
+                {
+                    "name": "freetype2",
+                    "buildsystem": "meson",
+                    "config-opts": [
+                        "-Dharfbuzz=disabled"
+                    ],
+                    "sources": [
+                        {
+                            "type": "git",
+                            "url": "https://gitlab.freedesktop.org/freetype/freetype.git",
+                            "tag": "VER-2-13-2"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "security-utils",
+            "buildsystem": "simple",
+            "build-commands": [
+                "install -d /app/share/security-utils",
+                "cp -r *.php css js password_hash_gen_doc.html README.md /app/share/security-utils/",
+                "install -Dm755 flatpak-wrapper.sh /app/bin/security-utils",
+                "install -Dm644 dev.secutils.SecurityUtils.desktop /app/share/applications/dev.secutils.SecurityUtils.desktop",
+                "install -Dm644 dev.secutils.SecurityUtils.svg /app/share/icons/hicolor/scalable/apps/dev.secutils.SecurityUtils.svg",
+                "install -Dm644 dev.secutils.SecurityUtils.appdata.xml /app/share/metainfo/dev.secutils.SecurityUtils.appdata.xml"
+            ],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "."
+                },
+                {
+                    "type": "file",
+                    "path": "flatpak-wrapper.sh",
+                    "dest-filename": "flatpak-wrapper.sh"
+                },
+                {
+                    "type": "file",
+                    "path": "dev.secutils.SecurityUtils.desktop",
+                    "dest-filename": "dev.secutils.SecurityUtils.desktop"
+                },
+                {
+                    "type": "file",
+                    "path": "dev.secutils.SecurityUtils.svg",
+                    "dest-filename": "dev.secutils.SecurityUtils.svg"
+                },
+                {
+                    "type": "file",
+                    "path": "dev.secutils.SecurityUtils.appdata.xml",
+                    "dest-filename": "dev.secutils.SecurityUtils.appdata.xml"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+#!/bin/bash
+# Snap wrapper script for Security Utilities
+set -e
+
+APP_DIR="$SNAP/usr/share/security-utils"
+DATA_DIR="$SNAP_USER_DATA"
+
+# Create data directory
+mkdir -p "$DATA_DIR"
+
+# Set working directory
+cd "$APP_DIR"
+
+# Find available port
+PORT=8070
+while netstat -tuln | grep -q ":$PORT "; do
+    PORT=$((PORT + 1))
+done
+
+echo "🚀 Starting Security Utilities on port $PORT..."
+echo "   🌐 Dashboard: http://localhost:$PORT"
+echo "   🔐 Password Hash Generator: http://localhost:$PORT/password_hash_gen.php"
+echo "   🖼️  Image Randomizer: http://localhost:$PORT/image-randomizer.php"
+echo ""
+echo "Press Ctrl+C to stop the server..."
+
+# Create temp directory for image processing
+mkdir -p "$DATA_DIR/temp"
+
+# Export temp directory for PHP
+export SECURITY_UTILS_TEMP="$DATA_DIR/temp"
+
+# Start PHP built-in server
+"$SNAP/usr/bin/php" -S localhost:$PORT -t "$APP_DIR" &
+PHP_PID=$!
+
+# Function to cleanup on exit
+cleanup() {
+    echo ""
+    echo "🛑 Stopping Security Utilities..."
+    kill $PHP_PID 2>/dev/null || true
+    exit 0
+}
+
+# Set up signal handlers
+trap cleanup SIGINT SIGTERM
+
+# Try to open browser after delay
+sleep 2
+if command -v xdg-open &> /dev/null; then
+    xdg-open "http://localhost:$PORT" 2>/dev/null &
+fi
+
+# Wait for PHP server to exit
+wait $PHP_PID

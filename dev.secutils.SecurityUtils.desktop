@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Security Utilities
+Comment=Web-based security tools for developers and security professionals
+Exec=security-utils
+Icon=dev.secutils.SecurityUtils
+Terminal=false
+Type=Application
+Categories=Development;Security;Network;
+StartupNotify=true
+Keywords=security;password;hash;encryption;image;randomizer;
+MimeType=application/x-php;

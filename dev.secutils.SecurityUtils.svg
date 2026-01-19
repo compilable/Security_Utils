@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bg)" stroke="#4a5568" stroke-width="2"/>
+  
+  <!-- Shield Shape -->
+  <path d="M64 20 L44 28 L44 52 Q44 72 64 92 Q84 72 84 52 L84 28 Z" 
+        fill="url(#shield)" stroke="#2d3748" stroke-width="1.5"/>
+  
+  <!-- Lock Symbol -->
+  <rect x="56" y="48" width="16" height="20" rx="2" ry="2" 
+        fill="#2d3748" stroke="#e2e8f0" stroke-width="1"/>
+  
+  <!-- Lock Shackle -->
+  <path d="M60 48 L60 42 Q60 38 64 38 Q68 38 68 42 L68 48" 
+        fill="none" stroke="#2d3748" stroke-width="2"/>
+  
+  <!-- Key Hole -->
+  <circle cx="64" cy="55" r="2" fill="#e2e8f0"/>
+  <rect x="63" y="55" width="2" height="6" fill="#e2e8f0"/>
+  
+  <!-- Code Brackets -->
+  <text x="32" y="45" font-family="monospace" font-size="16" font-weight="bold" fill="#e2e8f0">&lt;</text>
+  <text x="88" y="45" font-family="monospace" font-size="16" font-weight="bold" fill="#e2e8f0">/&gt;</text>
+  
+  <!-- Binary Pattern -->
+  <text x="30" y="85" font-family="monospace" font-size="8" fill="#a0aec0" opacity="0.7">101</text>
+  <text x="48" y="95" font-family="monospace" font-size="8" fill="#a0aec0" opacity="0.7">010</text>
+  <text x="75" y="85" font-family="monospace" font-size="8" fill="#a0aec0" opacity="0.7">110</text>
+  <text x="88" y="95" font-family="monospace" font-size="8" fill="#a0aec0" opacity="0.7">001</text>
+  
+  <!-- Highlight -->
+  <ellipse cx="52" cy="35" rx="8" ry="4" fill="#ffffff" opacity="0.3"/>
+</svg>

@@ -1,0 +1,80 @@
+name: security-utils
+version: '1.0.0'
+summary: Web-based security tools for developers and security professionals
+description: |
+  Security Utilities is a comprehensive collection of web-based security tools 
+  designed for developers, security professionals, and system administrators. 
+  
+  Features include:
+  - Password Hash Generator with support for multiple algorithms (bcrypt, Argon2, scrypt)
+  - Image File Randomizer for forensic data obfuscation  
+  - Secure file upload and processing capabilities
+  - Dark/Light theme support with user preference persistence
+  - Content Security Policy compliance for enhanced security
+  - CSRF protection and rate limiting for secure operations
+
+  The application runs as a local web server, providing a modern web interface 
+  while maintaining complete data privacy by processing everything locally.
+
+grade: stable
+confinement: strict
+base: core22
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  security-utils:
+    command: bin/security-utils-wrapper
+    daemon: simple
+    restart-condition: always
+    plugs:
+      - network
+      - network-bind
+      - home
+      - desktop
+      - desktop-legacy
+
+parts:
+  php:
+    plugin: autotools
+    source: https://www.php.net/distributions/php-8.2.25.tar.gz
+    source-checksum: sha256/0d70b9d9f748b62e3d38bf4e9e9dd0e94b8c57f4dc2abe3ff0c1daaa6bd0159a
+    autotools-configure-parameters:
+      - --enable-gd
+      - --with-freetype
+      - --with-jpeg
+      - --with-png
+      - --enable-fileinfo
+      - --enable-session
+      - --disable-cli
+      - --enable-fpm
+      - --prefix=/usr
+    build-packages:
+      - build-essential
+      - libpng-dev
+      - libjpeg-dev
+      - libfreetype6-dev
+      - pkg-config
+    stage-packages:
+      - libpng16-16
+      - libjpeg8
+      - libfreetype6
+
+  security-utils-app:
+    plugin: dump
+    source: .
+    organize:
+      '*.php': usr/share/security-utils/
+      'css/': usr/share/security-utils/css/
+      'js/': usr/share/security-utils/js/
+      'README.md': usr/share/security-utils/
+      'password_hash_gen_doc.html': usr/share/security-utils/
+    stage:
+      - usr/share/security-utils/
+
+  wrapper:
+    plugin: dump
+    source: snap/
+    organize:
+      'security-utils-wrapper': bin/security-utils-wrapper
