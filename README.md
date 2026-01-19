@@ -1,6 +1,6 @@
 # Security Utilities
 
-A collection of web-based security tools designed for developers and security professionals.
+A collection of web-based security tools designed for developers and everyday users.
 
 ## 🛠️ Tools Included
 
