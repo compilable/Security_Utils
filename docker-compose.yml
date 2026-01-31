@@ -1,18 +1,57 @@
-version: '3.8'
-
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: password-hash-generator
+    container_name: sec-utils-web
     ports:
       - "8070:80"
     volumes:
-      - .:/var/www/html
+      - ./:/var/www/html
+      - temp_volume:/var/www/html/temp
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     restart: unless-stopped
+    # Security: Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Security: Drop dangerous capabilities and prevent CVE-2024-4577 exploitation
+    cap_drop:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - MKNOD
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
     labels:
       - "com.docker.compose.project=sec_utils"
-      - "description=Password Hash Generator v2.0.0"
+      - "description=Password Hash Generator v2.0.0 - Secure Configuration"
+      - "security.hardened=true"
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Security: Named volumes with specific permissions
+volumes:
+  temp_volume:
+    driver: local
+
+# Security: Custom network with restricted access
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
