@@ -1,6 +1,6 @@
 <?php
 // Security headers with improved CSP and additional security headers
-header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'none'; object-src 'none'; base-uri 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'none'; object-src 'none'; base-uri 'self';");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
@@ -411,7 +411,9 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     throw new Error('Invalid input text');
                 }
                 
-                if (text.length > MAX_INPUT_LENGTH && !['md5', 'bcrypt', 'scrypt', 'argon2'].includes(algorithm)) {
+                // Only apply length restrictions to non-hash algorithms (WebCrypto algorithms)
+                // Hash algorithms like bcrypt, scrypt, argon2 can handle longer inputs including pre-hashed data
+                if (text.length > MAX_INPUT_LENGTH && !['md5', 'bcrypt', 'scrypt', 'argon2', 'sha256', 'sha384', 'sha512', 'sha1'].includes(algorithm)) {
                     throw new Error('Input too long');
                 }
                 
@@ -604,7 +606,12 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 if (questionList.length === 1) {
                     return qHashes[0];
                 } else {
-                    return await this.genStringHash(algorithm, qHashes.join(''));
+                    // For multiple questions, hash each joined result incrementally to avoid length issues
+                    let combinedHash = qHashes[0];
+                    for (let i = 1; i < qHashes.length; i++) {
+                        combinedHash = await this.genStringHash(algorithm, combinedHash + qHashes[i]);
+                    }
+                    return combinedHash;
                 }
             }
 
