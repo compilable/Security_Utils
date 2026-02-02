@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: sec-utils-web
     ports:
-      - "8070:80"
+      - "3020:80"
     volumes:
       - ./:/var/www/html
       - temp_volume:/var/www/html/temp

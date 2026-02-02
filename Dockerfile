@@ -1,17 +1,20 @@
-# Security: Use patched PHP version to fix CVE-2024-4577
+# Security: Use patched PHP version to fix CVE-2024-4577 and updated base image for CVE-2025-68973 and CVE-2025-69420
 FROM php:8.2.23-apache
 
-# Security: Update system packages first to patch known CVEs
-RUN apt-get update && apt-get upgrade -y
-
+# Security: Update system packages first to patch known CVEs including CVE-2025-68973 and CVE-2025-69420
 # Install system dependencies and clean up in single layer
-RUN apt-get install -y \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libwebp-dev \
-    libxpm-dev \
-    curl \
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y \
+        gnupg2 \
+        libssl3 \
+        openssl \
+        ca-certificates \
+        libpng-dev \
+        libjpeg62-turbo-dev \
+        libfreetype6-dev \
+        libwebp-dev \
+        libxpm-dev \
+        curl \
     && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \

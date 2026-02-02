@@ -140,6 +140,13 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         </div>
     </div>
     
+    <!-- Back Button -->
+    <div class="container mt-3">
+        <a href="index.php" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+    
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
