@@ -48,6 +48,11 @@ RUN mkdir -p /var/www/html/temp \
     && chown -R www-data:www-data /var/www/html \
     && chmod 755 /var/www/html/temp
 
+# Copy application files
+COPY --chown=www-data:www-data *.php /var/www/html/
+COPY --chown=www-data:www-data css/ /var/www/html/css/
+COPY --chown=www-data:www-data js/ /var/www/html/js/
+
 # Security: Configure PHP with secure settings including CVE-2024-4577 mitigation
 RUN { \
     echo 'expose_php = Off'; \

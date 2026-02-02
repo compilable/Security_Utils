@@ -1,13 +1,9 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: sec-utils-web
+    image: compilable/compilable-private:sec_utils
     ports:
       - "3020:80"
     volumes:
-      - ./:/var/www/html
       - temp_volume:/var/www/html/temp
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
@@ -47,11 +43,3 @@ services:
 volumes:
   temp_volume:
     driver: local
-
-# Security: Custom network with restricted access
-networks:
-  default:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
