@@ -412,6 +412,28 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             }
         }, 1000);
 
+        // Check Web Crypto API availability
+        function isWebCryptoAvailable() {
+            return window.isSecureContext && 
+                   typeof window.crypto !== 'undefined' && 
+                   typeof window.crypto.subtle !== 'undefined';
+        }
+
+        // Fallback for crypto.getRandomValues when Web Crypto API is not available
+        function getRandomBytes(length) {
+            if (isWebCryptoAvailable()) {
+                return crypto.getRandomValues(new Uint8Array(length));
+            } else {
+                // Fallback using Math.random (less secure but functional)
+                console.warn('Using fallback random generation (less secure). Consider using HTTPS for better security.');
+                const bytes = new Uint8Array(length);
+                for (let i = 0; i < length; i++) {
+                    bytes[i] = Math.floor(Math.random() * 256);
+                }
+                return bytes;
+            }
+        }
+
         class SecureHashUtils {
             static async genStringHash(algorithm, text) {
                 if (!text || typeof text !== 'string') {
