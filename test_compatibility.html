@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hash Compatibility Test</title>
+    <!-- Include crypto-js for secure MD5 implementation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <h1>Hash Compatibility Test</h1>
+    <pre id="results"></pre>
+
+    <script>
+        // Copy the relevant classes from password_hash_gen.php
+        const MAX_FILES = 10;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        const MAX_INPUT_LENGTH = 100;
+        const MAX_QUESTION_LENGTH = 100;
+
+        class SecureHashUtils {
+            static async genStringHash(algorithm, text) {
+                if (!text || typeof text !== 'string') {
+                    throw new Error('Invalid input text');
+                }
+                
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                
+                switch(algorithm) {
+                    case 'md5':
+                        return CryptoJS.MD5(text).toString();
+                    case 'sha256':
+                        const sha256Hash = await crypto.subtle.digest('SHA-256', data);
+                        return this.bufferToHex(sha256Hash);
+                    case 'sha512':
+                        const sha512Hash = await crypto.subtle.digest('SHA-512', data);
+                        return this.bufferToHex(sha512Hash);
+                    default:
+                        throw new Error('Unsupported algorithm');
+                }
+            }
+
+            static bufferToHex(buffer) {
+                return Array.from(new Uint8Array(buffer))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            }
+
+            static async genFileHash(fileList, algorithm, cycles = 1) {
+                if (!Array.isArray(fileList) || fileList.length === 0) return "";
+                if (cycles < 1 || cycles > 10) throw new Error('Invalid cycle count');
+
+                const fileHashes = [];
+                
+                // Sort files by name for consistent results
+                const sortedFiles = Array.from(fileList).sort((a, b) => a.name.localeCompare(b.name));
+                
+                for (const file of sortedFiles) {
+                    let fileHash = await this.calculateFileHash(file, algorithm);
+                    
+                    for (let cycle = 1; cycle < cycles; cycle++) {
+                        fileHash = await this.genStringHash(algorithm, fileHash);
+                    }
+                    fileHashes.push(fileHash);
+                }
+
+                if (fileList.length === 1) {
+                    return fileHashes[0];
+                } else {
+                    return await this.genStringHash(algorithm, fileHashes.join(''));
+                }
+            }
+
+            static async calculateFileHash(file, algorithm) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        try {
+                            const arrayBuffer = e.target.result;
+                            let hash;
+                            
+                            switch(algorithm) {
+                                case 'md5':
+                                    const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                                    hash = CryptoJS.MD5(wordArray).toString();
+                                    break;
+                                case 'sha256':
+                                    const sha256Hash = await crypto.subtle.digest('SHA-256', arrayBuffer);
+                                    hash = SecureHashUtils.bufferToHex(sha256Hash);
+                                    break;
+                                case 'sha512':
+                                    const sha512Hash = await crypto.subtle.digest('SHA-512', arrayBuffer);
+                                    hash = SecureHashUtils.bufferToHex(sha512Hash);
+                                    break;
+                                default:
+                                    throw new Error('Unsupported hash algorithm');
+                            }
+                            resolve(hash);
+                        } catch (error) {
+                            reject(new Error(`Failed to hash file ${file.name}: ${error.message}`));
+                        }
+                    };
+                    reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            static async genQuestionHash(questionList, algorithm, cycles = 1) {
+                if (!Array.isArray(questionList) || questionList.length === 0) return "";
+                if (cycles < 1 || cycles > 10) throw new Error('Invalid cycle count');
+
+                const qHashes = [];
+
+                for (const question of questionList) {
+                    if (typeof question !== 'string' || question.length > MAX_QUESTION_LENGTH) {
+                        throw new Error('Invalid question format or too long');
+                    }
+                    
+                    let questionHash = await this.genStringHash(algorithm, question);
+                    
+                    for (let cycle = 1; cycle < cycles; cycle++) {
+                        questionHash = await this.genStringHash(algorithm, questionHash);
+                    }
+                    qHashes.push(questionHash);
+                }
+
+                if (questionList.length === 1) {
+                    return qHashes[0];
+                } else {
+                    // Join all question hashes first, then hash the result (matches Python implementation)
+                    return await this.genStringHash(algorithm, qHashes.join(''));
+                }
+            }
+
+            static async getHmacDigest(algorithm, passwordList, key) {
+                if (!Array.isArray(passwordList) || passwordList.length === 0) {
+                    return "";
+                }
+                
+                if (!key || typeof key !== 'string' || key.length > MAX_INPUT_LENGTH) {
+                    throw new Error('Invalid HMAC key');
+                }
+
+                const password = passwordList.join('');
+                
+                if (password.length === 0) {
+                    return "";
+                }
+
+                try {
+                    switch(algorithm) {
+                        case 'md5':
+                            // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
+                            return CryptoJS.HmacMD5(password, key).toString();
+                        case 'sha256':
+                            const encoder = new TextEncoder();
+                            const keyData = encoder.encode(key);
+                            const messageData = encoder.encode(password);
+                            
+                            const cryptoKey = await crypto.subtle.importKey(
+                                'raw',
+                                keyData,
+                                { name: 'HMAC', hash: 'SHA-256' },
+                                false,
+                                ['sign']
+                            );
+
+                            const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+                            return this.bufferToHex(signature);
+                        default:
+                            throw new Error('Unsupported hash algorithm');
+                    }
+                } catch (error) {
+                    throw new Error(`HMAC generation failed: ${error.message}`);
+                }
+            }
+        }
+
+        // Create a test file with the same content as Python test
+        function createTestFile() {
+            return new File(['test file content'], 'test.txt', {type: 'text/plain'});
+        }
+
+        async function runTests() {
+            const results = document.getElementById('results');
+            let output = '';
+            
+            try {
+                // Test string hashing
+                output += '=== STRING HASHING TESTS ===\n';
+                const testText = 'hello world';
+                const md5Result = await SecureHashUtils.genStringHash('md5', testText);
+                const sha256Result = await SecureHashUtils.genStringHash('sha256', testText);
+                output += `MD5('${testText}'): ${md5Result}\n`;
+                output += `SHA256('${testText}'): ${sha256Result}\n`;
+                
+                // Test file hashing
+                output += '\n=== FILE HASHING TESTS ===\n';
+                const testFile = createTestFile();
+                const fileMd5 = await SecureHashUtils.genFileHash([testFile], 'md5', 1);
+                output += `File MD5: ${fileMd5}\n`;
+                
+                // Test question hashing
+                output += '\n=== QUESTION HASHING TESTS ===\n';
+                const questions = ['answer1', 'answer2'];
+                const questionMd5 = await SecureHashUtils.genQuestionHash(questions, 'md5', 1);
+                output += `Questions MD5: ${questionMd5}\n`;
+                
+                // Test HMAC
+                output += '\n=== HMAC TESTS ===\n';
+                const passwordList = [fileMd5, questionMd5];
+                const hmacKey = 'testkey';
+                const finalHmac = await SecureHashUtils.getHmacDigest('md5', passwordList, hmacKey);
+                output += `Final HMAC: ${finalHmac}\n`;
+                
+                // Expected results from Python
+                output += '\n=== EXPECTED RESULTS (from Python) ===\n';
+                output += `MD5('hello world'): 5eb63bbbe01eeed093cb22bb8f5acdc3\n`;
+                output += `SHA256('hello world'): b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9\n`;
+                output += `File MD5: c785060c866796cc2a1708c997154c8e\n`;
+                output += `Questions MD5: ad08e37313e10d3f962b7bd1dda7ce17\n`;
+                output += `Final HMAC: 1ed6e8f7e54a5f36120925e9f2ceb499\n`;
+                
+                // Check compatibility
+                output += '\n=== COMPATIBILITY CHECK ===\n';
+                const compatible = (
+                    md5Result === '5eb63bbbe01eeed093cb22bb8f5acdc3' &&
+                    sha256Result === 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9' &&
+                    fileMd5 === 'c785060c866796cc2a1708c997154c8e' &&
+                    questionMd5 === 'ad08e37313e10d3f962b7bd1dda7ce17' &&
+                    finalHmac === '1ed6e8f7e54a5f36120925e9f2ceb499'
+                );
+                
+                output += `JavaScript implementation ${compatible ? 'MATCHES' : 'DOES NOT MATCH'} Python implementation!\n`;
+                
+            } catch (error) {
+                output += `ERROR: ${error.message}\n`;
+            }
+            
+            results.textContent = output;
+        }
+
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

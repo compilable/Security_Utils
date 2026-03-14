@@ -613,12 +613,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 if (questionList.length === 1) {
                     return qHashes[0];
                 } else {
-                    // For multiple questions, hash each joined result incrementally to avoid length issues
-                    let combinedHash = qHashes[0];
-                    for (let i = 1; i < qHashes.length; i++) {
-                        combinedHash = await this.genStringHash(algorithm, combinedHash + qHashes[i]);
-                    }
-                    return combinedHash;
+                    // Join all question hashes first, then hash the result (matches Python implementation)
+                    return await this.genStringHash(algorithm, qHashes.join(''));
                 }
             }
 
@@ -646,10 +642,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     let hashAlg;
                     switch(algorithm) {
                         case 'md5':
-                            // Fall back to simple implementation for MD5 as Web Crypto doesn't support it for HMAC
-                            const keyHash = CryptoJS.MD5(key).toString();
-                            const dataHash = CryptoJS.MD5(password).toString();
-                            return CryptoJS.MD5(keyHash + dataHash).toString();
+                            // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
+                            return CryptoJS.HmacMD5(password, key).toString();
                         case 'sha256':
                             hashAlg = 'SHA-256';
                             break;
