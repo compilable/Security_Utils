@@ -1,5 +1,5 @@
-# Security: Use patched PHP version to fix CVE-2024-4577 and updated base image for CVE-2025-68973 and CVE-2025-69420
-FROM php:8.2.23-apache
+# Security: Use patched PHP version to fix CVE-2024-4577, CVE-2026-25646 (LIBPNG), CVE-2025-68973 and CVE-2025-69420
+FROM php:8.4.18-apache
 
 # Security: Update system packages first to patch known CVEs including CVE-2025-68973 and CVE-2025-69420
 # Install system dependencies and clean up in single layer
