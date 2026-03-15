@@ -367,7 +367,18 @@ function handleCommandLineInterface() {
         echo "Examples:\n";
         echo "  php image-randomizer.php batch /path/to/images\n";
         echo "  php image-randomizer.php batch /path/to/images 3 sha256\n";
-        echo "  php image-randomizer.php batch /path/to/images 5 md5 /path/to/output\n";
+    $cliResult = handleCommandLineInterface();
+
+    if ($cliResult === false) {
+        // Invalid or missing CLI arguments; indicate failure and avoid running web logic
+        if (defined('STDERR')) {
+            fwrite(STDERR, "Invalid or missing CLI arguments.\n");
+        }
+        exit(1);
+    }
+
+    // CLI processing completed successfully; avoid running web logic
+    exit(0);
         exit(0);
     }
     
@@ -418,7 +429,7 @@ if (isset($_GET['serve']) && isset($_GET['file'])) {
         header('X-Content-Type-Options: nosniff');
         header('Content-Disposition: inline; filename="' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"');
         
-        readfile($filePath);
+if (($_SERVER['REQUEST_METHOD'] ?? null) === 'POST' && isset($_FILES['images'])) {
         exit;
     }
     
