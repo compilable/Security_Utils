@@ -418,7 +418,7 @@ if (isset($_GET['serve']) && isset($_GET['file'])) {
     exit('File not found');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_FILES['images'])) {
     // CSRF protection
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         http_response_code(403);
@@ -485,7 +485,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
 }
 
 // Handle batch processing via web interface (for demo purposes - in production, this might be restricted)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['batch_folder'])) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['batch_folder'])) {
     // CSRF protection
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         http_response_code(403);
