@@ -526,11 +526,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['batch_folder'
         try {
             $batchResult = batchRandomizeImages($folderPath, $cycles, $hashAlgorithm);
             
-            // Convert batch results to the same format as individual results for display
-            foreach ($batchResult['results'] as $result) {
-                $result['serve_url'] = ''; // No serve URL for local files
-                $results[] = $result;
-            }
+            // Do not convert batch results to individual results with empty serve_url,
+            // as this would cause broken image/download links in the results template.
+            // Instead, attach detailed results to the batch summary so they can be
+            // rendered separately without expecting a serve_url.
             
             if (!empty($batchResult['errors'])) {
                 $errors = array_merge($errors, $batchResult['errors']);
@@ -545,6 +544,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['batch_folder'
                 'folder_path' => $batchResult['folder_path'],
                 'hash_algorithm' => $batchResult['hash_algorithm'],
                 'cycles' => $batchResult['cycles'],
+                'files' => $batchResult['results'],
             ];
             
         } catch (Exception $e) {
