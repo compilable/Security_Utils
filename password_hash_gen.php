@@ -449,7 +449,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 warning.style.zIndex = '9999';
                 warning.style.maxWidth = '350px';
                 warning.innerHTML = `
-                    <strong>Security Notice:</strong> Using fallback encryption. For enhanced security, access this page over HTTPS or localhost.
+                    <strong>Security Notice:</strong> Using fallback cryptography. For enhanced security, access this page over HTTPS or localhost.
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.body.appendChild(warning);
