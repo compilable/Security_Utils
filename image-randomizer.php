@@ -513,15 +513,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['batch_folder'
                 $errors = array_merge($errors, $batchResult['errors']);
             }
             
-            // Add summary message
-            $results[] = [
-                'filename' => 'BATCH SUMMARY',
-                'original_hash' => 'Total Files: ' . $batchResult['total_files'],
-                'new_hash' => 'Processed: ' . $batchResult['processed'] . ', Skipped: ' . $batchResult['skipped'],
-                'path' => $batchResult['folder_path'],
+            // Add summary data separately (do not mix with per-file results to avoid broken links)
+            $batchSummary = [
+                'label' => 'BATCH SUMMARY',
+                'total_files' => $batchResult['total_files'],
+                'processed' => $batchResult['processed'],
+                'skipped' => $batchResult['skipped'],
+                'folder_path' => $batchResult['folder_path'],
                 'hash_algorithm' => $batchResult['hash_algorithm'],
                 'cycles' => $batchResult['cycles'],
-                'serve_url' => ''
             ];
             
         } catch (Exception $e) {
