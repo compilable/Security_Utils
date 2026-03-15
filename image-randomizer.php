@@ -222,6 +222,11 @@ function batchRandomizeImages($folderPath, $cycles = CYCLE_COUNT, $hashAlgorithm
             throw new Exception('Unable to create output directory: ' . $outputDir);
         }
     }
+
+    // Validate output directory readability and writability
+    if (!is_dir($outputDir) || !is_readable($outputDir) || !is_writable($outputDir)) {
+        throw new Exception('Output directory is not readable or writable: ' . $outputDir);
+    }
     
     // Get all image files from the folder
     $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
