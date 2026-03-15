@@ -382,7 +382,14 @@ function handleCommandLineInterface() {
         exit(0);
     }
     
-    return false;
+    // Unknown CLI action: show error and usage, then exit with non-zero status
+    echo "Unknown command: " . $action . "\n\n";
+    echo "Image Randomizer - Batch Processing\n";
+    echo "Usage: php image-randomizer.php batch <folder_path> [cycles] [hash_algorithm] [output_dir]\n";
+    echo "\n";
+    echo "Run with 'help' for more information:\n";
+    echo "  php image-randomizer.php help\n";
+    exit(1);
 }
 
 // Check if running from command line
