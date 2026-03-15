@@ -233,6 +233,10 @@ function batchRandomizeImages($folderPath, $cycles = CYCLE_COUNT, $hashAlgorithm
         $imageFiles = array_merge($imageFiles, $files);
     }
     
+    // Deduplicate and sort for deterministic processing
+    $imageFiles = array_values(array_unique($imageFiles));
+    sort($imageFiles, SORT_STRING);
+    
     if (empty($imageFiles)) {
         throw new Exception('No image files found in folder: ' . $folderPath);
     }
