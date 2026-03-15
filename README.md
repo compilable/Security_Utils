@@ -94,7 +94,7 @@ If you prefer manual control:
 ## 💻 Native Installation
 
 ### Prerequisites
-- PHP 8.2 or higher
+- PHP 8.4.18 or higher
 - PHP GD extension
 - Web browser
 
