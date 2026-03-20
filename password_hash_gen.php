@@ -433,6 +433,35 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 return bytes;
             }
         }
+        
+        // Show warning about insecure context
+        function showSecurityWarning() {
+            if (!isWebCryptoAvailable() && !window.securityWarningShown) {
+                window.securityWarningShown = true;
+                console.warn('Web Crypto API not available. Using fallback implementations. For better security, access the application over HTTPS or localhost.');
+                
+                // Show user-visible warning
+                const warning = document.createElement('div');
+                warning.className = 'alert alert-warning alert-dismissible fade show';
+                warning.style.position = 'fixed';
+                warning.style.top = '80px';
+                warning.style.right = '20px';
+                warning.style.zIndex = '9999';
+                warning.style.maxWidth = '350px';
+                warning.innerHTML = `
+                    <strong>Security Notice:</strong> Using fallback cryptography. For enhanced security, access this page over HTTPS or localhost.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(warning);
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => {
+                    if (warning.parentNode) {
+                        warning.parentNode.removeChild(warning);
+                    }
+                }, 10000);
+            }
+        }
 
         class SecureHashUtils {
             static async genStringHash(algorithm, text) {
@@ -446,19 +475,30 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     throw new Error('Input too long');
                 }
                 
-                const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                
                 switch(algorithm) {
                     case 'md5':
                         // Use crypto-js for secure MD5
                         return CryptoJS.MD5(text).toString();
                     case 'sha256':
-                        const sha256Hash = await crypto.subtle.digest('SHA-256', data);
-                        return this.bufferToHex(sha256Hash);
+                        if (isWebCryptoAvailable()) {
+                            const encoder = new TextEncoder();
+                            const data = encoder.encode(text);
+                            const sha256Hash = await crypto.subtle.digest('SHA-256', data);
+                            return this.bufferToHex(sha256Hash);
+                        } else {
+                            // Fallback to crypto-js
+                            return CryptoJS.SHA256(text).toString();
+                        }
                     case 'sha512':
-                        const sha512Hash = await crypto.subtle.digest('SHA-512', data);
-                        return this.bufferToHex(sha512Hash);
+                        if (isWebCryptoAvailable()) {
+                            const encoder = new TextEncoder();
+                            const data = encoder.encode(text);
+                            const sha512Hash = await crypto.subtle.digest('SHA-512', data);
+                            return this.bufferToHex(sha512Hash);
+                        } else {
+                            // Fallback to crypto-js
+                            return CryptoJS.SHA512(text).toString();
+                        }
                     case 'bcrypt':
                         // BCrypt with cost factor of 12
                         if (!bcryptLib) {
@@ -559,12 +599,24 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                     hash = CryptoJS.MD5(wordArray).toString();
                                     break;
                                 case 'sha256':
-                                    const sha256Hash = await crypto.subtle.digest('SHA-256', arrayBuffer);
-                                    hash = SecureHashUtils.bufferToHex(sha256Hash);
+                                    if (isWebCryptoAvailable()) {
+                                        const sha256Hash = await crypto.subtle.digest('SHA-256', arrayBuffer);
+                                        hash = SecureHashUtils.bufferToHex(sha256Hash);
+                                    } else {
+                                        // Fallback to crypto-js
+                                        const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                                        hash = CryptoJS.SHA256(wordArray).toString();
+                                    }
                                     break;
                                 case 'sha512':
-                                    const sha512Hash = await crypto.subtle.digest('SHA-512', arrayBuffer);
-                                    hash = SecureHashUtils.bufferToHex(sha512Hash);
+                                    if (isWebCryptoAvailable()) {
+                                        const sha512Hash = await crypto.subtle.digest('SHA-512', arrayBuffer);
+                                        hash = SecureHashUtils.bufferToHex(sha512Hash);
+                                    } else {
+                                        // Fallback to crypto-js
+                                        const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                                        hash = CryptoJS.SHA512(wordArray).toString();
+                                    }
                                     break;
                                 case 'bcrypt':
                                     // For files with bcrypt, convert to base64 first then hash
@@ -581,7 +633,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                         throw new Error('SCrypt library not available');
                                     }
                                     const fileBuffer = new Uint8Array(arrayBuffer);
-                                    const scryptFileSalt = crypto.getRandomValues(new Uint8Array(16));
+                                    const scryptFileSalt = getRandomBytes(16);
                                     const fileScryptResult = await scryptLib.scrypt(fileBuffer, scryptFileSalt, 16384, 8, 1, 64);
                                     const fileSaltHex = Array.from(scryptFileSalt).map(b => b.toString(16).padStart(2, '0')).join('');
                                     const fileHashHex = Array.from(fileScryptResult).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -592,7 +644,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                     const fileBase64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
                                     const argon2Result = await argon2.hash({
                                         pass: fileBase64,
-                                        salt: crypto.getRandomValues(new Uint8Array(16)),
+                                        salt: getRandomBytes(16),
                                         type: argon2.ArgonType.Argon2id,
                                         mem: 65536,
                                         time: 3,
@@ -656,22 +708,48 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 }
 
                 try {
-                    // Use Web Crypto API for proper HMAC implementation
-                    const encoder = new TextEncoder();
-                    const keyData = encoder.encode(key);
-                    const messageData = encoder.encode(password);
-                    
-                    let hashAlg;
                     switch(algorithm) {
                         case 'md5':
                             // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
                             return CryptoJS.HmacMD5(password, key).toString();
                         case 'sha256':
-                            hashAlg = 'SHA-256';
-                            break;
+                            if (isWebCryptoAvailable()) {
+                                // Use Web Crypto API for proper HMAC implementation
+                                const encoder = new TextEncoder();
+                                const keyData = encoder.encode(key);
+                                const messageData = encoder.encode(password);
+                                const cryptoKey = await crypto.subtle.importKey(
+                                    'raw',
+                                    keyData,
+                                    { name: 'HMAC', hash: 'SHA-256' },
+                                    false,
+                                    ['sign']
+                                );
+                                const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+                                return this.bufferToHex(signature);
+                            } else {
+                                // Fallback to crypto-js
+                                return CryptoJS.HmacSHA256(password, key).toString();
+                            }
                         case 'sha512':
-                            hashAlg = 'SHA-512';
-                            break;
+                            if (isWebCryptoAvailable()) {
+                                // Use Web Crypto API for proper HMAC implementation
+                                const encoder = new TextEncoder();
+                                const keyData = encoder.encode(key);
+                                const messageData = encoder.encode(password);
+                                const cryptoKey = await crypto.subtle.importKey(
+                                    'raw',
+                                    keyData,
+                                    { name: 'HMAC', hash: 'SHA-512' },
+                                    false,
+                                    ['sign']
+                                );
+                                const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+                                return this.bufferToHex(signature);
+                            } else {
+                                // Fallback to crypto-js
+                                return CryptoJS.HmacSHA512(password, key).toString();
+                            }
                         case 'bcrypt':
                             // BCrypt doesn't support HMAC, use key-stretching approach
                             if (!bcryptLib) {
@@ -694,7 +772,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             const combinedArgon2 = password + key;
                             const argon2Result = await argon2.hash({
                                 pass: combinedArgon2,
-                                salt: crypto.getRandomValues(new Uint8Array(16)),
+                                salt: getRandomBytes(16),
                                 type: argon2.ArgonType.Argon2id,
                                 mem: 65536,
                                 time: 3,
@@ -703,19 +781,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             return argon2Result.encoded;
                         default:
                             throw new Error('Unsupported hash algorithm');
-                    }
-
-                    if (hashAlg) {
-                        const cryptoKey = await crypto.subtle.importKey(
-                            'raw',
-                            keyData,
-                            { name: 'HMAC', hash: hashAlg },
-                            false,
-                            ['sign']
-                        );
-
-                        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-                        return this.bufferToHex(signature);
                     }
                 } catch (error) {
                     throw new Error(`HMAC generation failed: ${error.message}`);
@@ -1221,6 +1286,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
+            // Show security warning if not in secure context
+            showSecurityWarning();
             new PasswordHashGenerator();
         });
     </script>
