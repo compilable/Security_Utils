@@ -1,6 +1,6 @@
 services:
   web:
-    image: compilable/compilable-private:sec_utils
+    build: .
     ports:
       - "3020:80"
     volumes:
@@ -29,7 +29,7 @@ services:
       - seccomp:unconfined
     labels:
       - "com.docker.compose.project=sec_utils"
-      - "description=Password Hash Generator v2.0.0 - Secure Configuration"
+      - "description=Password Hash Generator v2.0.1 - Secure Configuration"
       - "security.hardened=true"
     # Health check
     healthcheck:

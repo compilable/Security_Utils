@@ -4,7 +4,7 @@ A collection of web-based security tools designed for developers and everyday us
 
 ## 🛠️ Tools Included
 
-### 1. Password Hash Generator v2.0.0
+### 1. Password Hash Generator v2.0.1
 - **URL**: `http://localhost:8070/password_hash_gen.php`
 - **Features**:
   - Generate secure password hashes using various algorithms

@@ -12,7 +12,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Hash Generator v2.0.0</title>
+    <title>Password Hash Generator v2.0.1</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
     <style>
@@ -77,12 +77,63 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             position: fixed;
             top: 20px;
             right: 20px;
-            z-index: 1050;
+            z-index: 1060;
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--border-color);
             border-radius: 0.375rem;
-            padding: 0.5rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            padding: 1rem;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+            min-width: 160px;
+            max-width: 200px;
+        }
+        
+        .theme-toggle .form-label {
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+            display: block;
+        }
+        
+        .theme-toggle .form-select {
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        
+        .theme-toggle .form-check-label {
+            font-size: 0.9rem;
+        }
+        
+        .timeout-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1060;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+            min-width: 180px;
+            max-width: 220px;
+        }
+        
+        .timeout-control .form-label {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            display: block;
+            font-size: 0.9rem;
+        }
+        
+        .timeout-control .form-select {
+            font-size: 0.85rem;
+            width: 100%;
+        }
+        
+        .timeout-control small {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
         }
         
         .file-list {
@@ -132,7 +183,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 <body class="bg-light">
     <!-- Theme Toggle -->
     <div class="theme-toggle">
-        <div class="form-check form-switch">
+        <div class="form-check form-switch mb-2">
             <input class="form-check-input" type="checkbox" id="themeToggle">
             <label class="form-check-label" for="themeToggle" id="themeLabel">
                 <i class="bi bi-sun-fill"></i> Light
@@ -152,7 +203,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.0</h4>
+                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.1</h4>
                         <a href="password_hash_gen_doc.html" class="btn btn-outline-light btn-sm" target="_blank" title="Open User Documentation">
                             <i class="bi bi-question-circle"></i> Help
                         </a>
@@ -292,6 +343,20 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         </div>
     </div>
     
+    <!-- Auto-clear Timeout Control -->
+    <div class="timeout-control">
+        <label for="timeoutSelect" class="form-label">
+            <i class="bi bi-clock"></i> Auto-clear timeout:
+        </label>
+        <select class="form-select" id="timeoutSelect">
+            <option value="120">2 minutes</option>
+            <option value="180">3 minutes</option>
+            <option value="240">4 minutes</option>
+            <option value="300">5 minutes</option>
+        </select>
+        <small class="text-muted">Form clears automatically for security</small>
+    </div>
+    
     <!-- Footer -->
     <footer class="mt-5 py-4 border-top">
         <div class="container">
@@ -413,6 +478,10 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         }, 1000);
 
         class SecureHashUtils {
+            static isSecureContext() {
+                return (window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost');
+            }
+
             static async genStringHash(algorithm, text) {
                 if (!text || typeof text !== 'string') {
                     throw new Error('Invalid input text');
@@ -424,19 +493,30 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     throw new Error('Input too long');
                 }
                 
-                const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                
                 switch(algorithm) {
                     case 'md5':
                         // Use crypto-js for secure MD5
                         return CryptoJS.MD5(text).toString();
                     case 'sha256':
-                        const sha256Hash = await crypto.subtle.digest('SHA-256', data);
-                        return this.bufferToHex(sha256Hash);
+                        if (this.isSecureContext() && crypto.subtle) {
+                            const encoder = new TextEncoder();
+                            const data = encoder.encode(text);
+                            const sha256Hash = await crypto.subtle.digest('SHA-256', data);
+                            return this.bufferToHex(sha256Hash);
+                        } else {
+                            // Fallback to CryptoJS for non-secure contexts
+                            return CryptoJS.SHA256(text).toString();
+                        }
                     case 'sha512':
-                        const sha512Hash = await crypto.subtle.digest('SHA-512', data);
-                        return this.bufferToHex(sha512Hash);
+                        if (this.isSecureContext() && crypto.subtle) {
+                            const encoder = new TextEncoder();
+                            const data = encoder.encode(text);
+                            const sha512Hash = await crypto.subtle.digest('SHA-512', data);
+                            return this.bufferToHex(sha512Hash);
+                        } else {
+                            // Fallback to CryptoJS for non-secure contexts
+                            return CryptoJS.SHA512(text).toString();
+                        }
                     case 'bcrypt':
                         // BCrypt with cost factor of 12
                         if (!bcryptLib) {
@@ -537,12 +617,24 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                     hash = CryptoJS.MD5(wordArray).toString();
                                     break;
                                 case 'sha256':
-                                    const sha256Hash = await crypto.subtle.digest('SHA-256', arrayBuffer);
-                                    hash = SecureHashUtils.bufferToHex(sha256Hash);
+                                    if (SecureHashUtils.isSecureContext() && crypto.subtle) {
+                                        const sha256Hash = await crypto.subtle.digest('SHA-256', arrayBuffer);
+                                        hash = SecureHashUtils.bufferToHex(sha256Hash);
+                                    } else {
+                                        // Fallback to CryptoJS for non-secure contexts
+                                        const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                                        hash = CryptoJS.SHA256(wordArray).toString();
+                                    }
                                     break;
                                 case 'sha512':
-                                    const sha512Hash = await crypto.subtle.digest('SHA-512', arrayBuffer);
-                                    hash = SecureHashUtils.bufferToHex(sha512Hash);
+                                    if (SecureHashUtils.isSecureContext() && crypto.subtle) {
+                                        const sha512Hash = await crypto.subtle.digest('SHA-512', arrayBuffer);
+                                        hash = SecureHashUtils.bufferToHex(sha512Hash);
+                                    } else {
+                                        // Fallback to CryptoJS for non-secure contexts
+                                        const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                                        hash = CryptoJS.SHA512(wordArray).toString();
+                                    }
                                     break;
                                 case 'bcrypt':
                                     // For files with bcrypt, convert to base64 first then hash
@@ -645,10 +737,20 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
                             return CryptoJS.HmacMD5(password, key).toString();
                         case 'sha256':
-                            hashAlg = 'SHA-256';
+                            if (this.isSecureContext() && crypto.subtle) {
+                                hashAlg = 'SHA-256';
+                            } else {
+                                // Fallback to CryptoJS HMAC
+                                return CryptoJS.HmacSHA256(password, key).toString();
+                            }
                             break;
                         case 'sha512':
-                            hashAlg = 'SHA-512';
+                            if (this.isSecureContext() && crypto.subtle) {
+                                hashAlg = 'SHA-512';
+                            } else {
+                                // Fallback to CryptoJS HMAC
+                                return CryptoJS.HmacSHA512(password, key).toString();
+                            }
                             break;
                         case 'bcrypt':
                             // BCrypt doesn't support HMAC, use key-stretching approach
@@ -715,14 +817,50 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
         class PasswordHashGenerator {
             constructor() {
+                console.log('=== PasswordHashGenerator constructor started ===');
                 this.selectedFiles = new Set();
                 this.selectedHash = 'md5';
                 this.maxFiles = MAX_FILES;
                 this.autoClearTimer = null;
-                this.autoClearInterval = 60000; // 1 minute in milliseconds
+                this.autoClearInterval = this.getTimeoutFromStorage(); // Load from storage
+                console.log('Initial autoClearInterval:', this.autoClearInterval);
+                
+                // Check for secure context and warn if not
+                this.checkSecurityContext();
+                
                 this.initializeTheme();
+                console.log('Theme initialized');
+                
+                this.initializeTimeout();
+                console.log('Timeout initialized');
+                
+                this.initializeHashAlgorithm();
+                console.log('Hash algorithm initialized');
+                
+                this.initializeFormDefaults();
+                console.log('Form defaults initialized');
+                
                 this.initializeEventListeners();
+                console.log('Event listeners initialized');
+                
                 this.startAutoClearTimer();
+                console.log('Auto-clear timer started');
+                
+                console.log('=== PasswordHashGenerator constructor completed ===');
+            }
+
+            checkSecurityContext() {
+                if (!SecureHashUtils.isSecureContext()) {
+                    console.warn('Non-secure context detected. Falling back to CryptoJS for cryptographic operations.');
+                    // Show warning to user about non-secure context
+                    setTimeout(() => {
+                        this.showWarning(
+                            'Warning: You are accessing this page over HTTP. For enhanced security, consider using HTTPS. Cryptographic operations will use fallback implementations.', 
+                            'warning', 
+                            8000
+                        );
+                    }, 1000);
+                }
             }
 
             initializeTheme() {
@@ -756,6 +894,83 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 } else {
                     themeLabel.innerHTML = '<i class="bi bi-sun-fill"></i> Light';
                 }
+            }
+
+            getTimeoutFromStorage() {
+                // Load saved timeout or default to 2 minutes (120 seconds)
+                const savedTimeout = localStorage.getItem('autoClearTimeout');
+                return savedTimeout ? parseInt(savedTimeout) * 1000 : 120000; // Convert to milliseconds
+            }
+
+            initializeHashAlgorithm() {
+                // Ensure MD5 is always selected by default on page load
+                document.getElementById('md5').checked = true;
+                this.selectedHash = 'md5';
+                
+                // Clear any other selections that might have been restored by browser
+                ['sha256', 'sha512', 'bcrypt', 'scrypt', 'argon2'].forEach(id => {
+                    document.getElementById(id).checked = false;
+                });
+            }
+
+            initializeFormDefaults() {
+                // Ensure iterations is set to 1 (first option)
+                const iterationsSelect = document.getElementById('iterations');
+                if (iterationsSelect) {
+                    iterationsSelect.value = '1';
+                }
+                
+                // Ensure show password checkbox is unchecked
+                const showPasswordCheck = document.getElementById('showPasswordCheck');
+                if (showPasswordCheck) {
+                    showPasswordCheck.checked = false;
+                }
+                
+                // Ensure all password fields are hidden (password type)
+                this.toggleAllPasswordVisibility(false);
+                
+                // Clear generated password field
+                const generatedPassword = document.getElementById('generatedPassword');
+                if (generatedPassword) {
+                    generatedPassword.value = '';
+                }
+                
+                // Disable copy button initially
+                const copyBtn = document.getElementById('copyBtn');
+                if (copyBtn) {
+                    copyBtn.disabled = true;
+                }
+            }
+
+            initializeTimeout() {
+                console.log('=== initializeTimeout() called ===');
+                
+                // Set up timeout selector
+                const timeoutSelect = document.getElementById('timeoutSelect');
+                console.log('Timeout select element:', timeoutSelect);
+                
+                if (!timeoutSelect) {
+                    console.error('timeoutSelect element not found!');
+                    // Try to find all select elements
+                    const allSelects = document.querySelectorAll('select');
+                    console.log('All select elements found:', allSelects);
+                    return;
+                }
+                
+                const savedTimeout = localStorage.getItem('autoClearTimeout') || '120';
+                timeoutSelect.value = savedTimeout;
+                console.log('Set timeout value to:', savedTimeout);
+                
+                timeoutSelect.addEventListener('change', (e) => {
+                    console.log('Timeout changed to:', e.target.value);
+                    const timeoutSeconds = parseInt(e.target.value);
+                    this.autoClearInterval = timeoutSeconds * 1000;
+                    localStorage.setItem('autoClearTimeout', timeoutSeconds.toString());
+                    this.resetAutoClearTimer();
+                    this.showWarning(`Auto-clear timeout updated to ${timeoutSeconds / 60} minute${timeoutSeconds / 60 > 1 ? 's' : ''}`, 'info', 3000);
+                });
+                
+                console.log('=== initializeTimeout() completed ===');
             }
 
             initializeEventListeners() {
@@ -834,17 +1049,23 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 // Clear existing timer
                 if (this.autoClearTimer) {
                     clearTimeout(this.autoClearTimer);
+                    this.autoClearTimer = null;
                 }
                 
                 // Start new timer
                 this.autoClearTimer = setTimeout(() => {
-                    this.showWarning('Form will be cleared in 10 seconds for security...', 'warning', 10000);
+                    const minutes = Math.floor(this.autoClearInterval / 60000);
+                    const timeUnit = minutes > 1 ? 'minutes' : 'minute';
+                    this.showWarning(`Form will be cleared in 10 seconds for security... (${minutes} ${timeUnit} timeout)`, 'warning', 10000);
                     
                     // Final warning and clear
                     setTimeout(() => {
-                        this.clearForm();
+                        this.clearFormInternal(); // Use internal clear to avoid double timer restart
                         this.showWarning('Form cleared automatically for security', 'info', 3000);
-                        this.startAutoClearTimer(); // Restart timer
+                        // Restart timer after auto-clear
+                        setTimeout(() => {
+                            this.startAutoClearTimer();
+                        }, 1000); // Small delay to ensure clean restart
                     }, 10000);
                 }, this.autoClearInterval - 10000); // Show warning 10 seconds before clearing
             }
@@ -1153,9 +1374,16 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             }
 
             clearForm() {
-                // Clear the auto-clear timer when manually clearing
+                this.clearFormInternal();
+                // Restart the auto-clear timer after manual clearing
+                this.startAutoClearTimer();
+            }
+
+            clearFormInternal() {
+                // Clear the auto-clear timer when clearing
                 if (this.autoClearTimer) {
                     clearTimeout(this.autoClearTimer);
+                    this.autoClearTimer = null;
                 }
                 
                 // Securely clear sensitive inputs
@@ -1191,9 +1419,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 if (window.gc && typeof window.gc === 'function') {
                     setTimeout(window.gc, 1000);
                 }
-                
-                // Restart the auto-clear timer
-                this.startAutoClearTimer();
             }
         }
 
