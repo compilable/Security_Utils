@@ -66,7 +66,28 @@ The launcher script will:
 - 🛡️ Handle port conflicts and container cleanup
 - ⏹️ Provide easy stop/restart options
 
-#### Option 2: Manual Docker Compose
+#### Option 2: Published Docker Image (Quick Start)
+
+For the fastest setup using our published image:
+
+1. **Pull and run directly**
+   ```bash
+   docker run -d -p 8070:80 --name security-utils your-username/security-utils:latest
+   ```
+
+2. **Or use Docker Compose with published image**
+   ```bash
+   # Download just the docker-compose.yml
+   wget https://raw.githubusercontent.com/compilable/Security_Utils/main/docker-compose.yml
+   docker-compose up -d
+   ```
+
+3. **Access the tools**
+   - Dashboard: http://localhost:8070/
+   - Password Hash Generator: http://localhost:8070/password_hash_gen.php
+   - Image Randomizer: http://localhost:8070/image-randomizer.php
+
+#### Option 3: Manual Docker Compose
 
 If you prefer manual control:
 
@@ -256,6 +277,66 @@ build/
 ### Local Development Setup
 
 The application uses volume mounting, so changes to your local files will be reflected immediately in the container.
+
+### Publishing Docker Images
+
+For maintainers wanting to publish updated images:
+
+```bash
+# Build and tag the image
+docker build -t your-username/security-utils:v2.0.1 -t your-username/security-utils:latest .
+
+# Login to Docker Hub or GitHub Container Registry
+docker login  # For Docker Hub
+# OR
+echo $GITHUB_TOKEN | docker login ghcr.io -u your-username --password-stdin  # For GHCR
+
+# Push to registry
+docker push your-username/security-utils:v2.0.1
+docker push your-username/security-utils:latest
+
+# For GitHub Container Registry, use:
+# docker push ghcr.io/your-username/security-utils:v2.0.1
+# docker push ghcr.io/your-username/security-utils:latest
+```
+
+**Automated Publishing with GitHub Actions:**
+
+Create `.github/workflows/docker-publish.yml`:
+```yaml
+name: Docker Publish
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+```
 
 ### File Structure
 ```
