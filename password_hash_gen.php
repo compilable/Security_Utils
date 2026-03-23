@@ -777,6 +777,12 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 }
 
                 try {
+                    // Setup for Web Crypto API
+                    const encoder = new TextEncoder();
+                    const keyData = encoder.encode(key);
+                    const messageData = encoder.encode(password);
+                    
+                    let hashAlg;
                     switch(algorithm) {
                         case 'md5':
                             // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
@@ -819,7 +825,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             const combinedArgon2 = password + key;
                             const argon2Result = await argon2.hash({
                                 pass: combinedArgon2,
-                                salt: getRandomBytes(16),
+                                salt: crypto.getRandomValues(new Uint8Array(16)),
                                 type: argon2.ArgonType.Argon2id,
                                 mem: 65536,
                                 time: 3,
@@ -828,6 +834,20 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             return argon2Result.encoded;
                         default:
                             throw new Error('Unsupported hash algorithm');
+                    }
+
+                    // Use Web Crypto API for SHA algorithms when available
+                    if (hashAlg) {
+                        const cryptoKey = await crypto.subtle.importKey(
+                            'raw',
+                            keyData,
+                            { name: 'HMAC', hash: hashAlg },
+                            false,
+                            ['sign']
+                        );
+
+                        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+                        return this.bufferToHex(signature);
                     }
                 } catch (error) {
                     throw new Error(`HMAC generation failed: ${error.message}`);
