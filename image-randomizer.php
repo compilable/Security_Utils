@@ -201,6 +201,202 @@ function getRandomColor($rgb, $rangeStepper = 5) {
     return $newRgb;
 }
 
+// Batch process all images in a folder
+function batchRandomizeImages($folderPath, $cycles = CYCLE_COUNT, $hashAlgorithm = DEFAULT_HASH_ALGORITHM, $outputDir = null) {
+    // Validate input parameters
+    if (!is_dir($folderPath) || !is_readable($folderPath)) {
+        throw new Exception('Invalid or unreadable folder path: ' . $folderPath);
+    }
+    
+    if (!in_array(strtolower($hashAlgorithm), ALLOWED_HASH_ALGORITHMS)) {
+        throw new Exception('Invalid hash algorithm: ' . $hashAlgorithm);
+    }
+    
+    $cycles = max(1, min(10, intval($cycles)));
+    
+    // Set output directory (same as input if not specified)
+    if ($outputDir === null) {
+        $outputDir = $folderPath;
+    } elseif (!is_dir($outputDir)) {
+        if (!mkdir($outputDir, 0755, true)) {
+            throw new Exception('Unable to create output directory: ' . $outputDir);
+        }
+    }
+
+    // Validate output directory readability and writability
+    if (!is_dir($outputDir) || !is_readable($outputDir) || !is_writable($outputDir)) {
+        throw new Exception('Output directory is not readable or writable: ' . $outputDir);
+    }
+    
+    // Get all image files from the folder
+    $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $imageFiles = [];
+    
+    foreach ($imageExtensions as $ext) {
+        $files = glob($folderPath . '/*.' . $ext);
+        $files = array_merge($files, glob($folderPath . '/*.' . strtoupper($ext)));
+        $imageFiles = array_merge($imageFiles, $files);
+    }
+    
+    // Deduplicate and sort for deterministic processing
+    $imageFiles = array_values(array_unique($imageFiles));
+    sort($imageFiles, SORT_STRING);
+    
+    if (empty($imageFiles)) {
+        throw new Exception('No image files found in folder: ' . $folderPath);
+    }
+    
+    $results = [];
+    $errors = [];
+    $processed = 0;
+    $skipped = 0;
+    
+    foreach ($imageFiles as $imagePath) {
+        try {
+            // Validate the image file
+            if (!isValidImageFile($imagePath)) {
+                $errors[] = "Skipped invalid image: " . basename($imagePath);
+                $skipped++;
+                continue;
+            }
+            
+            // Determine output path
+            $filename = basename($imagePath);
+            $outputPath = ($outputDir === $folderPath) ? $imagePath : $outputDir . '/' . $filename;
+            
+            // If output path is different from input, copy file first
+            if ($outputPath !== $imagePath) {
+                if (!copy($imagePath, $outputPath)) {
+                    $errors[] = "Failed to copy file: " . $filename;
+                    $skipped++;
+                    continue;
+                }
+            }
+            
+            // Process the image
+            $result = randomizeImage($outputPath, $cycles, $hashAlgorithm);
+            $result['filename'] = $filename;
+            $result['original_path'] = $imagePath;
+            $result['output_path'] = $outputPath;
+            $result['cycles'] = $cycles;
+            $results[] = $result;
+            $processed++;
+            
+        } catch (Exception $e) {
+            $errors[] = "Error processing " . basename($imagePath) . ": " . $e->getMessage();
+            $skipped++;
+        }
+    }
+    
+    return [
+        'processed' => $processed,
+        'skipped' => $skipped,
+        'total_files' => count($imageFiles),
+        'results' => $results,
+        'errors' => $errors,
+        'folder_path' => $folderPath,
+        'output_dir' => $outputDir,
+        'cycles' => $cycles,
+        'hash_algorithm' => strtoupper($hashAlgorithm)
+    ];
+}
+
+// Command line interface for batch processing
+function handleCommandLineInterface() {
+    global $argv, $argc;
+    
+    if ($argc < 2) {
+        return false; // Not command line usage
+    }
+    
+    $action = $argv[1] ?? '';
+    
+    if ($action === 'batch' && isset($argv[2])) {
+        $folderPath = $argv[2];
+        $cycles = isset($argv[3]) ? intval($argv[3]) : CYCLE_COUNT;
+        $hashAlgorithm = isset($argv[4]) ? $argv[4] : DEFAULT_HASH_ALGORITHM;
+        $outputDir = isset($argv[5]) ? $argv[5] : null;
+        
+        try {
+            echo "Processing images in folder: $folderPath\n";
+            echo "Cycles: $cycles, Hash Algorithm: $hashAlgorithm\n";
+            if ($outputDir) {
+                echo "Output Directory: $outputDir\n";
+            }
+            echo "----------------------------------------\n";
+            
+            $batchResult = batchRandomizeImages($folderPath, $cycles, $hashAlgorithm, $outputDir);
+            
+            echo "Processing completed!\n";
+            echo "Total files found: " . $batchResult['total_files'] . "\n";
+            echo "Successfully processed: " . $batchResult['processed'] . "\n";
+            echo "Skipped: " . $batchResult['skipped'] . "\n";
+            
+            if (!empty($batchResult['errors'])) {
+                echo "\nErrors:\n";
+                foreach ($batchResult['errors'] as $error) {
+                    echo "- $error\n";
+                }
+            }
+            
+            if (!empty($batchResult['results'])) {
+                echo "\nProcessed Files:\n";
+                foreach ($batchResult['results'] as $result) {
+                    echo "- " . $result['filename'] . " (Hash: " . substr($result['new_hash'], 0, 8) . "...)\n";
+                }
+            }
+            
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage() . "\n";
+            exit(1);
+        }
+        
+        exit(0);
+    }
+    
+    if ($action === 'help' || $action === '--help' || $action === '-h') {
+        echo "Image Randomizer - Batch Processing\n";
+        echo "Usage: php image-randomizer.php batch <folder_path> [cycles] [hash_algorithm] [output_dir]\n";
+        echo "\n";
+        echo "Arguments:\n";
+        echo "  folder_path     Path to folder containing images to process\n";
+        echo "  cycles          Number of randomization cycles (1-10, default: 5)\n";
+        echo "  hash_algorithm  Hash algorithm to use (md5, sha256, sha512, default: md5)\n";
+        echo "  output_dir      Output directory (optional, defaults to input folder)\n";
+        echo "\n";
+        echo "Examples:\n";
+        echo "  php image-randomizer.php batch /path/to/images\n";
+        echo "  php image-randomizer.php batch /path/to/images 3 sha256\n";
+    $cliResult = handleCommandLineInterface();
+
+    if ($cliResult === false) {
+        // Invalid or missing CLI arguments; indicate failure and avoid running web logic
+        if (defined('STDERR')) {
+            fwrite(STDERR, "Invalid or missing CLI arguments.\n");
+        }
+        exit(1);
+    }
+
+    // CLI processing completed successfully; avoid running web logic
+    exit(0);
+        exit(0);
+    }
+    
+    // Unknown CLI action: show error and usage, then exit with non-zero status
+    echo "Unknown command: " . $action . "\n\n";
+    echo "Image Randomizer - Batch Processing\n";
+    echo "Usage: php image-randomizer.php batch <folder_path> [cycles] [hash_algorithm] [output_dir]\n";
+    echo "\n";
+    echo "Run with 'help' for more information:\n";
+    echo "  php image-randomizer.php help\n";
+    exit(1);
+}
+
+// Check if running from command line
+if (php_sapi_name() === 'cli') {
+    handleCommandLineInterface();
+}
+
 // Handle file upload and processing
 $results = [];
 $errors = [];
@@ -240,7 +436,7 @@ if (isset($_GET['serve']) && isset($_GET['file'])) {
         header('X-Content-Type-Options: nosniff');
         header('Content-Disposition: inline; filename="' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"');
         
-        readfile($filePath);
+if (($_SERVER['REQUEST_METHOD'] ?? null) === 'POST' && isset($_FILES['images'])) {
         exit;
     }
     
@@ -249,7 +445,7 @@ if (isset($_GET['serve']) && isset($_GET['file'])) {
     exit('File not found');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_FILES['images'])) {
     // CSRF protection
     if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
         http_response_code(403);
@@ -311,6 +507,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['images'])) {
             }
         }
     }
+        }
+    }
+}
+
+// Handle batch processing via web interface (for demo purposes - in production, this might be restricted)
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['batch_folder'])) {
+    // CSRF protection
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        http_response_code(403);
+        $errors[] = 'Invalid CSRF token. Please refresh the page and try again.';
+    } else {
+        $folderPath = $_POST['batch_folder'];
+        $cycles = isset($_POST['batch_cycles']) ? max(1, min(10, intval($_POST['batch_cycles']))) : CYCLE_COUNT;
+        $hashAlgorithm = isset($_POST['batch_hashAlgorithm']) && in_array($_POST['batch_hashAlgorithm'], ALLOWED_HASH_ALGORITHMS) 
+            ? $_POST['batch_hashAlgorithm'] : DEFAULT_HASH_ALGORITHM;
+        
+        try {
+            $batchResult = batchRandomizeImages($folderPath, $cycles, $hashAlgorithm);
+            
+            // Do not convert batch results to individual results with empty serve_url,
+            // as this would cause broken image/download links in the results template.
+            // Instead, attach detailed results to the batch summary so they can be
+            // rendered separately without expecting a serve_url.
+            
+            if (!empty($batchResult['errors'])) {
+                $errors = array_merge($errors, $batchResult['errors']);
+            }
+            
+            // Add summary data separately (do not mix with per-file results to avoid broken links)
+            $batchSummary = [
+                'label' => 'BATCH SUMMARY',
+                'total_files' => $batchResult['total_files'],
+                'processed' => $batchResult['processed'],
+                'skipped' => $batchResult['skipped'],
+                'folder_path' => $batchResult['folder_path'],
+                'hash_algorithm' => $batchResult['hash_algorithm'],
+                'cycles' => $batchResult['cycles'],
+                'files' => $batchResult['results'],
+            ];
+            
+        } catch (Exception $e) {
+            $errors[] = "Batch processing error: " . $e->getMessage();
         }
     }
 }
@@ -564,6 +802,57 @@ if ($files) {
                             </div>
                         </form>
 
+                        <!-- Batch Processing Form -->
+                        <hr class="my-4">
+                        <h5><i class="bi bi-folder"></i> Batch Process Folder</h5>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            <strong>Warning:</strong> This feature processes local server folders. Use with caution in production environments.
+                        </div>
+                        
+                        <form method="post">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <div class="mb-3">
+                                <label for="batch_folder" class="form-label fw-bold">Folder Path:</label>
+                                <input type="text" class="form-control" id="batch_folder" name="batch_folder" 
+                                       placeholder="/path/to/image/folder" required>
+                                <div class="form-text">Enter the full path to a folder containing image files</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="batch_cycles" class="form-label fw-bold">Randomization Cycles:</label>
+                                    <select class="form-select" id="batch_cycles" name="batch_cycles">
+                                        <?php for($i = 1; $i <= 10; $i++): ?>
+                                            <option value="<?php echo $i; ?>" <?php echo $i === CYCLE_COUNT ? 'selected' : ''; ?>><?php echo $i; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Hashing Algorithm:</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="batch_hashAlgorithm" id="batch_md5" value="md5" checked>
+                                        <label class="form-check-label" for="batch_md5">MD5</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="batch_hashAlgorithm" id="batch_sha256" value="sha256">
+                                        <label class="form-check-label" for="batch_sha256">SHA 256</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="batch_hashAlgorithm" id="batch_sha512" value="sha512">
+                                        <label class="form-check-label" for="batch_sha512">SHA 512</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-warning btn-lg">
+                                    <i class="bi bi-folder-fill"></i> Process Folder
+                                </button>
+                            </div>
+                        </form>
+
                         <!-- Results -->
                         <?php if (!empty($results) || !empty($errors)): ?>
                         <hr class="my-4">
@@ -622,13 +911,22 @@ if ($files) {
                     </div>
                     <div class="card-body">
                         <ul class="mb-0">
-                            <li>Upload one or more images (JPEG, PNG, GIF, WebP)</li>
+                            <li><strong>Web Upload:</strong> Upload one or more images (JPEG, PNG, GIF, WebP)</li>
+                            <li><strong>Batch Processing:</strong> Process entire folders of images via web interface or command line</li>
                             <li>The algorithm randomly modifies pixel colors across the image</li>
                             <li>Each cycle applies more randomization with varying step sizes</li>
-                            <li>The MD5 hash changes, creating a unique fingerprint</li>
+                            <li>Hash fingerprints change, creating unique file signatures</li>
                             <li>Original image structure is preserved but modified</li>
-                            <li>Files are automatically deleted after 1 hour for security</li>
+                            <li>Uploaded files are automatically deleted after 1 hour for security</li>
                         </ul>
+                        
+                        <div class="mt-3">
+                            <h6><i class="bi bi-terminal"></i> Command Line Usage</h6>
+                            <div class="bg-dark text-light p-2 rounded">
+                                <code>php image-randomizer.php batch /path/to/images [cycles] [hash_algorithm] [output_dir]</code>
+                            </div>
+                            <small class="text-muted">Example: <code>php image-randomizer.php batch ./photos 3 sha256</code></small>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -477,6 +477,57 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             }
         }, 1000);
 
+        // Check Web Crypto API availability
+        function isWebCryptoAvailable() {
+            return window.isSecureContext && 
+                   typeof window.crypto !== 'undefined' && 
+                   typeof window.crypto.subtle !== 'undefined';
+        }
+
+        // Fallback for crypto.getRandomValues when Web Crypto API is not available
+        function getRandomBytes(length) {
+            if (isWebCryptoAvailable()) {
+                return crypto.getRandomValues(new Uint8Array(length));
+            } else {
+                // Fallback using Math.random (less secure but functional)
+                console.warn('Using fallback random generation (less secure). Consider using HTTPS for better security.');
+                const bytes = new Uint8Array(length);
+                for (let i = 0; i < length; i++) {
+                    bytes[i] = Math.floor(Math.random() * 256);
+                }
+                return bytes;
+            }
+        }
+        
+        // Show warning about insecure context
+        function showSecurityWarning() {
+            if (!isWebCryptoAvailable() && !window.securityWarningShown) {
+                window.securityWarningShown = true;
+                console.warn('Web Crypto API not available. Using fallback implementations. For better security, access the application over HTTPS or localhost.');
+                
+                // Show user-visible warning
+                const warning = document.createElement('div');
+                warning.className = 'alert alert-warning alert-dismissible fade show';
+                warning.style.position = 'fixed';
+                warning.style.top = '80px';
+                warning.style.right = '20px';
+                warning.style.zIndex = '9999';
+                warning.style.maxWidth = '350px';
+                warning.innerHTML = `
+                    <strong>Security Notice:</strong> Using fallback cryptography. For enhanced security, access this page over HTTPS or localhost.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(warning);
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => {
+                    if (warning.parentNode) {
+                        warning.parentNode.removeChild(warning);
+                    }
+                }, 10000);
+            }
+        }
+
         class SecureHashUtils {
             static isSecureContext() {
                 return (window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost');
@@ -651,7 +702,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                         throw new Error('SCrypt library not available');
                                     }
                                     const fileBuffer = new Uint8Array(arrayBuffer);
-                                    const scryptFileSalt = crypto.getRandomValues(new Uint8Array(16));
+                                    const scryptFileSalt = getRandomBytes(16);
                                     const fileScryptResult = await scryptLib.scrypt(fileBuffer, scryptFileSalt, 16384, 8, 1, 64);
                                     const fileSaltHex = Array.from(scryptFileSalt).map(b => b.toString(16).padStart(2, '0')).join('');
                                     const fileHashHex = Array.from(fileScryptResult).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -662,7 +713,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                     const fileBase64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
                                     const argon2Result = await argon2.hash({
                                         pass: fileBase64,
-                                        salt: crypto.getRandomValues(new Uint8Array(16)),
+                                        salt: getRandomBytes(16),
                                         type: argon2.ArgonType.Argon2id,
                                         mem: 65536,
                                         time: 3,
@@ -726,12 +777,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 }
 
                 try {
-                    // Use Web Crypto API for proper HMAC implementation
-                    const encoder = new TextEncoder();
-                    const keyData = encoder.encode(key);
-                    const messageData = encoder.encode(password);
-                    
-                    let hashAlg;
                     switch(algorithm) {
                         case 'md5':
                             // Proper HMAC-MD5 implementation using CryptoJS (matches Python implementation)
@@ -774,7 +819,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             const combinedArgon2 = password + key;
                             const argon2Result = await argon2.hash({
                                 pass: combinedArgon2,
-                                salt: crypto.getRandomValues(new Uint8Array(16)),
+                                salt: getRandomBytes(16),
                                 type: argon2.ArgonType.Argon2id,
                                 mem: 65536,
                                 time: 3,
@@ -783,19 +828,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             return argon2Result.encoded;
                         default:
                             throw new Error('Unsupported hash algorithm');
-                    }
-
-                    if (hashAlg) {
-                        const cryptoKey = await crypto.subtle.importKey(
-                            'raw',
-                            keyData,
-                            { name: 'HMAC', hash: hashAlg },
-                            false,
-                            ['sign']
-                        );
-
-                        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
-                        return this.bufferToHex(signature);
                     }
                 } catch (error) {
                     throw new Error(`HMAC generation failed: ${error.message}`);
@@ -1424,6 +1456,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
+            // Show security warning if not in secure context
+            showSecurityWarning();
             new PasswordHashGenerator();
         });
     </script>
