@@ -93,7 +93,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     </div>
                     
                     <div class="mb-3">
-                        <span class="badge bg-success me-2">v2.0.1</span>
+                        <span class="badge bg-success me-2">v2.0.2</span>
                         <span class="badge bg-outline-primary me-2">
                             <i class="bi bi-cpu"></i> Client-side
                         </span>
