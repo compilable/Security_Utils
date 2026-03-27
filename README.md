@@ -4,7 +4,7 @@ A collection of web-based security tools designed for developers and everyday us
 
 ## 🛠️ Tools Included
 
-### 1. Password Hash Generator v2.0.1
+### 1. Password Hash Generator v2.0.2
 - **URL**: `http://localhost:8070/password_hash_gen.php`
 - **Features**:
   - Generate secure password hashes using various algorithms
@@ -28,7 +28,7 @@ A collection of web-based security tools designed for developers and everyday us
   - Secure file upload handling
 ## 🔄 Recent Improvements
 
-### Password Hash Generator v2.0.1 Updates
+### Password Hash Generator v2.0.2 Updates
 - **Enhanced UI**: Replaced dropdown iteration selector with intuitive range slider (1-20)
 - **Improved Password Handling**: Single passwords now hash directly for standard compatibility
 - **Smart Reset**: Form reset properly restores all controls to default values
@@ -299,7 +299,7 @@ For maintainers wanting to publish updated images:
 
 ```bash
 # Build and tag the image
-docker build -t your-username/security-utils:v2.0.1 -t your-username/security-utils:latest .
+docker build -t your-username/security-utils:v2.0.2 -t your-username/security-utils:latest .
 
 # Login to Docker Hub or GitHub Container Registry
 docker login  # For Docker Hub
@@ -307,11 +307,11 @@ docker login  # For Docker Hub
 echo $GITHUB_TOKEN | docker login ghcr.io -u your-username --password-stdin  # For GHCR
 
 # Push to registry
-docker push your-username/security-utils:v2.0.1
+docker push your-username/security-utils:v2.0.2
 docker push your-username/security-utils:latest
 
 # For GitHub Container Registry, use:
-# docker push ghcr.io/your-username/security-utils:v2.0.1
+# docker push ghcr.io/your-username/security-utils:v2.0.2
 # docker push ghcr.io/your-username/security-utils:latest
 ```
 

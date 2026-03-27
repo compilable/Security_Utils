@@ -1,11 +1,11 @@
-# Security Utilities v2.0.1 - Release Notes
+# Security Utilities v2.0.2 - Release Notes
 
 **Release Date:** January 19, 2026  
 **GitHub Repository:** [https://github.com/compilable/Security_Utils](https://github.com/compilable/Security_Utils)
 
 ## 🎉 Major Release Highlights
 
-Security Utilities v2.0.1 represents a significant advancement in web-based security tooling, bringing enterprise-grade features, enhanced security measures, and comprehensive deployment options to developers and security professionals.
+Security Utilities v2.0.2 represents a significant advancement in web-based security tooling, bringing enterprise-grade features, enhanced security measures, and comprehensive deployment options to developers and security professionals.
 
 ### Bug fixes / Features
 - [Feature Request :Creating an AppImage so I can execute easily](https://github.com/compilable/Security_Utils/issues/9)
@@ -14,7 +14,7 @@ Security Utilities v2.0.1 represents a significant advancement in web-based secu
 
 ## 🛠️ Core Features
 
-### 1. Password Hash Generator v2.0.1
+### 1. Password Hash Generator v2.0.2
 **Advanced Cryptographic Hash Generation**
 - **Multiple Algorithm Support:** bcrypt, Argon2, scrypt, SHA-256, SHA-512, MD5
 - **Flexible Input Sources:**
@@ -247,4 +247,4 @@ Special thanks to the open source community, security researchers, and beta test
 
 ---
 
-*Security Utilities v2.0.1 - Empowering developers and security professionals with enterprise-grade security tools.*
+*Security Utilities v2.0.2 - Empowering developers and security professionals with enterprise-grade security tools.*

@@ -12,7 +12,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Hash Generator v2.0.1</title>
+    <title>Password Hash Generator v2.0.2</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
     <style>
@@ -203,7 +203,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.1</h4>
+                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.2</h4>
                         <a href="password_hash_gen_doc.html" class="btn btn-outline-light btn-sm" target="_blank" title="Open User Documentation">
                             <i class="bi bi-question-circle"></i> Help
                         </a>

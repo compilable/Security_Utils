@@ -31,7 +31,7 @@ services:
       - seccomp:unconfined
     labels:
       - "com.docker.compose.project=sec_utils"
-      - "description=Password Hash Generator v2.0.1 - Secure Configuration"
+      - "description=Password Hash Generator v2.0.2 - Secure Configuration"
       - "security.hardened=true"
     # Health check
     healthcheck:
