@@ -1,4 +1,7 @@
 <?php
+// Load configuration
+require_once 'config.php';
+
 // Security headers with improved CSP and additional security headers
 header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'none'; object-src 'none'; base-uri 'self';");
 header("X-Content-Type-Options: nosniff");
@@ -12,7 +15,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Hash Generator v2.0.2</title>
+    <title><?php echo ConfigLoader::getHashGeneratorName() . ' ' . ConfigLoader::getVersion(); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
     <style>
@@ -203,7 +206,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.2</h4>
+                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> <?php echo ConfigLoader::getHashGeneratorName() . ' ' . ConfigLoader::getVersion(); ?></h4>
                         <a href="password_hash_gen_doc.html" class="btn btn-outline-light btn-sm" target="_blank" title="Open User Documentation">
                             <i class="bi bi-question-circle"></i> Help
                         </a>
