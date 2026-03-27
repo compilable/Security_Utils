@@ -273,12 +273,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
                             <!-- Iterations -->
                             <div class="mb-4">
-                                <label for="iterations" class="form-label fw-bold">Number of iterations:</label>
-                                <select class="form-select" id="iterations" name="iterations">
-                                    <?php for($i = 1; $i <= 10; $i++): ?>
-                                        <option value="<?php echo $i; ?>" <?php echo $i === 1 ? 'selected' : ''; ?>><?php echo $i; ?></option>
-                                    <?php endfor; ?>
-                                </select>
+                                <label for="iterations" class="form-label fw-bold">Number of iterations: <span id="iterationsValue">1</span></label>
+                                <input type="range" class="form-range" id="iterations" name="iterations" min="1" max="20" value="1" step="1" oninput="document.getElementById('iterationsValue').textContent = this.value">
                             </div>
 
                             <!-- Hash Algorithm -->
@@ -1292,7 +1288,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     const selectedHash = this.selectedHash;
                     const iterations = parseInt(document.getElementById('iterations').value);
 
-                    if (iterations < 1 || iterations > 10) {
+                    if (iterations < 1 || iterations > 20) {
                         throw new Error('Invalid iteration count');
                     }
 
@@ -1322,22 +1318,21 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                         throw new Error('At least one input is required: password, files, or security questions');
                     }
 
-                    // If no files or questions provided but password exists, use the password itself as input
-                    if (finalPassword.length === 0 && password) {
-                        finalPassword.push(password);
-                    }
-
                     let finalHash;
                     
-                    // Use password as HMAC key if provided, otherwise just combine the hashes
-                    if (password) {
+                    // Check if we have ONLY a password (no files or security questions)
+                    if (finalPassword.length === 0 && password) {
+                        // Single password case - hash the password directly without HMAC
+                        finalHash = await SecureHashUtils.genStringHash(selectedHash, password);
+                    } else if (password && finalPassword.length > 0) {
+                        // Password + other inputs - use HMAC approach
                         finalHash = await SecureHashUtils.getHmacDigest(
                             selectedHash, 
                             finalPassword, 
                             password
                         );
                     } else {
-                        // If no password provided, just hash the combined inputs
+                        // No password provided, just hash the combined inputs
                         const combinedInput = finalPassword.join('');
                         finalHash = await SecureHashUtils.genStringHash(selectedHash, combinedInput);
                     }
@@ -1447,6 +1442,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 document.getElementById('showPasswordCheck').checked = false;
                 document.getElementById('md5').checked = true;
                 document.getElementById('iterations').value = '1';
+                document.getElementById('iterationsValue').textContent = '1';
 
                 // Clear files
                 this.selectedFiles.clear();

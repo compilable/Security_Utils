@@ -8,10 +8,14 @@ A collection of web-based security tools designed for developers and everyday us
 - **URL**: `http://localhost:8070/password_hash_gen.php`
 - **Features**:
   - Generate secure password hashes using various algorithms
-  - Verify passwords against existing hashes
-  - Support for multiple hashing algorithms (bcrypt, SHA, MD5, etc.)
+  - Verify passwords against existing hashes  
+  - Support for multiple hashing algorithms (BCrypt, SHA256, SHA512, MD5, SCrypt, Argon2)
+  - Configurable iteration count with range slider (1-20 iterations)
+  - Intelligent password handling: single passwords hash directly, complex inputs use HMAC
+  - Multi-input support: combine passwords, files, and security questions
   - Dark/Light theme support
   - Secure headers and CSP implementation
+  - Auto-clear timer for sensitive data protection
 
 ### 2. Image Randomizer
 - **URL**: `http://localhost:8070/image-randomizer.php`
@@ -22,7 +26,18 @@ A collection of web-based security tools designed for developers and everyday us
   - Multiple hash algorithms (MD5, SHA256, SHA512)
   - File integrity verification
   - Secure file upload handling
+## 🔄 Recent Improvements
 
+### Password Hash Generator v2.0.1 Updates
+- **Enhanced UI**: Replaced dropdown iteration selector with intuitive range slider (1-20)
+- **Improved Password Handling**: Single passwords now hash directly for standard compatibility
+- **Smart Reset**: Form reset properly restores all controls to default values
+- **Better User Experience**: Real-time iteration count display and responsive controls
+
+### Security Enhancements
+- Intelligent input processing: single passwords vs. complex multi-input scenarios
+- Maintained HMAC approach for advanced security when combining multiple inputs
+- Standard BCrypt compatibility for single password verification
 ## � Deployment Options
 
 Security Utilities supports multiple deployment methods to suit different environments and preferences:
@@ -382,7 +397,9 @@ docker build -t sec-utils .
 ### Customization
 
 - **Upload Directory**: Images are processed in the system temp directory
-- **File Size Limits**: Maximum 10MB per file, up to 10 files
+- **File Size Limits**: Maximum 10MB per file, up to 10 files  
+- **Password Hash Generator**: Configurable iterations (1-20), multiple algorithms supported
+- **Single vs Multi-Input**: Automatic detection for optimal hashing approach
 - **Security Headers**: Comprehensive CSP and security headers implemented
 - **Supported Formats**: JPEG, PNG, GIF, WebP
 
