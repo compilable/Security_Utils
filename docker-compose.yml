@@ -1,8 +1,8 @@
 services:
   web:
     # Use published image instead of local build
-    image: your-username/security-utils:latest
-    # build: .  # Keep commented for local development
+    #image: your-username/security-utils:latest
+    build: .  # Keep commented for local development
     ports:
       - "3020:80"
     volumes:
