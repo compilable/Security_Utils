@@ -4,7 +4,7 @@ set -e
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
-VERSION="1.0.0"
+VERSION="3.0.0"
 
 echo "🔨 Security Utilities Build Script"
 echo "   📂 Project: $PROJECT_DIR"
@@ -22,7 +22,7 @@ show_help() {
     echo "  native     - Create native installation script"
     echo "  flatpak    - Prepare Flatpak manifest and files"
     echo "  snap       - Prepare Snap package files"
-    echo "  appimage   - Create AppImage (requires appimage-builder)"
+    echo "  release    - Create reproducible source archive and SHA-256 checksum"
     echo "  all        - Build all targets"
     echo ""
     echo "Options:"
@@ -41,7 +41,6 @@ clean_build() {
 build_docker() {
     echo "🐳 Building Docker image..."
     docker build -t security-utils:$VERSION .
-    docker tag security-utils:$VERSION security-utils:latest
     
     echo "📋 Creating Docker launcher script..."
     cp run-security-utils.sh "$BUILD_DIR/"
@@ -73,7 +72,7 @@ build_flatpak() {
     cp dev.secutils.SecurityUtils.appdata.xml "$FLATPAK_DIR/"
     
     # Copy application files
-    cp -r *.php css js password_hash_gen_doc.html README.md "$FLATPAK_DIR/"
+    cp -r *.php css js password_hash_gen_doc.html README.md THIRD_PARTY_ASSETS.md THIRD_PARTY_ASSETS.sha256 RECOVERY_RELEASE_CHECKLIST.md "$FLATPAK_DIR/"
     
     # Make wrapper executable
     chmod +x "$FLATPAK_DIR/flatpak-wrapper.sh"
@@ -124,7 +123,7 @@ build_snap() {
     cp -r snap "$SNAP_DIR/"
     
     # Copy application files to snap directory
-    cp -r *.php css js password_hash_gen_doc.html README.md "$SNAP_DIR/"
+    cp -r *.php css js password_hash_gen_doc.html README.md THIRD_PARTY_ASSETS.md THIRD_PARTY_ASSETS.sha256 RECOVERY_RELEASE_CHECKLIST.md "$SNAP_DIR/"
     
     # Create build instructions
     cat > "$SNAP_DIR/BUILD.md" << 'EOF'
@@ -145,7 +144,7 @@ sudo snap install snapcraft --classic
 snapcraft
 
 # Install locally
-sudo snap install --dangerous security-utils_1.0.0_amd64.snap
+sudo snap install --dangerous security-utils_3.0.0_amd64.snap
 
 # Run the application
 snap run security-utils
@@ -154,7 +153,7 @@ snap run security-utils
 ## Publish
 ```bash
 # Upload to Snap Store (requires account)
-snapcraft upload security-utils_1.0.0_amd64.snap
+snapcraft upload security-utils_3.0.0_amd64.snap
 snapcraft release security-utils 1 stable
 ```
 EOF
@@ -164,98 +163,15 @@ EOF
     echo "   📖 Instructions: ./build/snap/BUILD.md"
 }
 
-build_appimage() {
-    echo "📦 Creating AppImage..."
-    
-    if ! command -v appimage-builder &> /dev/null; then
-        echo "❌ appimage-builder not found. Install with:"
-        echo "   pip3 install appimage-builder"
-        echo "   Or see: https://appimage-builder.readthedocs.io/"
-        return 1
-    fi
-    
-    APPIMAGE_DIR="$BUILD_DIR/appimage"
-    mkdir -p "$APPIMAGE_DIR"
-    
-    # Create AppDir structure
-    mkdir -p "$APPIMAGE_DIR/AppDir/usr/bin"
-    mkdir -p "$APPIMAGE_DIR/AppDir/usr/share/security-utils"
-    mkdir -p "$APPIMAGE_DIR/AppDir/usr/share/applications"
-    mkdir -p "$APPIMAGE_DIR/AppDir/usr/share/icons/hicolor/scalable/apps"
-    
-    # Copy application files
-    cp -r *.php css js password_hash_gen_doc.html README.md "$APPIMAGE_DIR/AppDir/usr/share/security-utils/"
-    cp dev.secutils.SecurityUtils.desktop "$APPIMAGE_DIR/AppDir/usr/share/applications/"
-    cp dev.secutils.SecurityUtils.svg "$APPIMAGE_DIR/AppDir/usr/share/icons/hicolor/scalable/apps/"
-    
-    # Create launcher script
-    cat > "$APPIMAGE_DIR/AppDir/usr/bin/security-utils" << 'EOF'
-#!/bin/bash
-APPDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
-cd "$APPDIR/usr/share/security-utils"
-php -S localhost:8070 &
-sleep 2
-xdg-open "http://localhost:8070" 2>/dev/null &
-wait
-EOF
-    chmod +x "$APPIMAGE_DIR/AppDir/usr/bin/security-utils"
-    
-    # Create AppImage recipe
-    cat > "$APPIMAGE_DIR/AppImageBuilder.yml" << 'EOF'
-version: 1
-script:
-  - rm -rf AppDir || true
-  - mkdir -p AppDir/usr/share/security-utils
-  - cp -r *.php css js password_hash_gen_doc.html README.md AppDir/usr/share/security-utils/
-
-AppDir:
-  path: ./AppDir
-  
-  app_info:
-    id: dev.secutils.SecurityUtils
-    name: Security Utilities
-    icon: dev.secutils.SecurityUtils
-    version: 1.0.0
-    exec: usr/bin/security-utils
-    exec_args: $@
-
-  apt:
-    arch: amd64
-    sources:
-      - sourceline: 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse'
-        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3B4FE6ACC0B21F32'
-    
-    include:
-      - php
-      - php-gd
-      - php-cli
-
-  files:
-    exclude:
-      - usr/share/man
-      - usr/share/doc/*/README.*
-      - usr/share/doc/*/changelog.*
-      - usr/share/doc/*/NEWS.*
-      - usr/share/doc/*/TODO.*
-
-AppImage:
-  update-information: null
-  sign-key: null
-  arch: x86_64
-EOF
-    
-    cd "$APPIMAGE_DIR"
-    appimage-builder --skip-tests
-    
-    if [ -f "Security Utilities-1.0.0-x86_64.AppImage" ]; then
-        mv "Security Utilities-1.0.0-x86_64.AppImage" "../security-utils-1.0.0-x86_64.AppImage"
-        echo "✅ AppImage created: ./build/security-utils-1.0.0-x86_64.AppImage"
-    else
-        echo "❌ AppImage build failed"
-        return 1
-    fi
-    
-    cd "$PROJECT_DIR"
+build_release() {
+    local release_dir="$BUILD_DIR/release"
+    local archive="$release_dir/security-utils-$VERSION.tar.gz"
+    mkdir -p "$release_dir"
+    tar --sort=name --mtime="@${SOURCE_DATE_EPOCH:-0}" --owner=0 --group=0 --numeric-owner \
+        --exclude='./.git' --exclude='./build' --exclude='./security_utils_developer_recommendations.md' \
+        -cf - . | gzip -n > "$archive"
+    (cd "$release_dir" && sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256")
+    echo "✅ Release archive: $archive"
 }
 
 # Parse command line arguments
@@ -276,7 +192,7 @@ while [[ $# -gt 0 ]]; do
             CLEAN=true
             shift
             ;;
-        docker|native|flatpak|snap|appimage|all)
+        docker|native|flatpak|snap|release|all)
             TARGETS+=("$1")
             shift
             ;;
@@ -315,16 +231,15 @@ for target in "${TARGETS[@]}"; do
         snap)
             build_snap
             ;;
-        appimage)
-            build_appimage
+        release)
+            build_release
             ;;
         all)
             build_docker
             build_native
             build_flatpak
             build_snap
-            echo ""
-            echo "ℹ️  AppImage requires appimage-builder. Run './build.sh appimage' if available."
+            build_release
             ;;
         *)
             echo "❌ Unknown target: $target"
@@ -342,7 +257,4 @@ echo "   🐳 Docker: ./build/run-security-utils.sh"
 echo "   💻 Native: ./build/install-native.sh" 
 echo "   📦 Flatpak: ./build/flatpak/"
 echo "   📦 Snap: ./build/snap/"
-if [ -f "$BUILD_DIR/security-utils-1.0.0-x86_64.AppImage" ]; then
-    echo "   📱 AppImage: ./build/security-utils-1.0.0-x86_64.AppImage"
-fi
 echo ""

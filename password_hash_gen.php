@@ -1,6 +1,6 @@
 <?php
 // Security headers with improved CSP and additional security headers
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; frame-src 'none'; object-src 'none'; base-uri 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
@@ -12,9 +12,9 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Hash Generator v2.0.2</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
+    <title>Legacy Hash Compatibility Tool</title>
+    <link href="css/vendor/bootstrap.min.css" rel="stylesheet">
+    <link href="css/vendor/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -203,7 +203,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Password Hash Generator v2.0.2</h4>
+                        <h4 class="mb-0"><i class="bi bi-shield-lock"></i> Legacy Hash Compatibility Tool</h4>
                         <a href="password_hash_gen_doc.html" class="btn btn-outline-light btn-sm" target="_blank" title="Open User Documentation">
                             <i class="bi bi-question-circle"></i> Help
                         </a>
@@ -273,7 +273,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
                             <!-- Iterations -->
                             <div class="mb-4">
-                                <label for="iterations" class="form-label fw-bold">Number of iterations: <span id="iterationsValue">1</span></label>
+                                <label for="iterations" class="form-label fw-bold">Legacy repeat cycles (not a security work factor): <span id="iterationsValue">1</span></label>
                                 <input type="range" class="form-range" id="iterations" name="iterations" min="1" max="20" value="1" step="1" oninput="document.getElementById('iterationsValue').textContent = this.value">
                             </div>
 
@@ -281,11 +281,11 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Hashing Algorithm:</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="hashAlgorithm" id="md5" value="md5" checked>
+                                    <input class="form-check-input" type="radio" name="hashAlgorithm" id="md5" value="md5">
                                     <label class="form-check-label" for="md5">MD5SUM</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="hashAlgorithm" id="sha256" value="sha256">
+                                    <input class="form-check-input" type="radio" name="hashAlgorithm" id="sha256" value="sha256" checked>
                                     <label class="form-check-label" for="sha256">SHA 256</label>
                                 </div>
                                 <div class="form-check">
@@ -304,6 +304,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                                     <input class="form-check-input" type="radio" name="hashAlgorithm" id="argon2" value="argon2">
                                     <label class="form-check-label" for="argon2">Argon2</label>
                                 </div>
+                                <small class="text-muted d-block mt-2">Fixed legacy parameters: bcrypt cost 12; scrypt N=16384, r=8, p=1, 64-byte output; Argon2id time=3, memory=64 MiB, parallelism=1, 32-byte output. Random salts make these outputs non-reproducible.</small>
                             </div>
 
                             <!-- Generate Button -->
@@ -377,15 +378,15 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <!-- Include crypto-js for secure MD5 implementation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="js/vendor/crypto-js.min.js"></script>
     <!-- Include bcryptjs for bcrypt support -->
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js" crossorigin="anonymous"></script>
+    <script src="js/vendor/bcrypt.min.js"></script>
     <!-- Include scrypt-js for scrypt support -->
-    <script src="https://cdn.jsdelivr.net/npm/scrypt-js@3.0.1/scrypt.min.js" crossorigin="anonymous"></script>
+    <script src="js/vendor/scrypt.min.js"></script>
     <!-- Include argon2-browser for Argon2 support -->
-    <script src="https://unpkg.com/argon2-browser@1.18.0/dist/argon2-bundled.min.js" crossorigin="anonymous"></script>
+    <script src="js/vendor/argon2-bundled.min.js"></script>
     <script>
         // Security constants
         const MAX_FILES = 10;
@@ -402,63 +403,24 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         let scryptLib = null;
         
         function detectBcryptLibrary() {
-            // Debug: Log available global objects
-            console.log('Available globals:', {
-                'typeof dcodeIO': typeof dcodeIO,
-                'typeof bcrypt': typeof bcrypt,
-                'typeof window.bcrypt': typeof window.bcrypt,
-                'typeof window.dcodeIO': typeof window.dcodeIO,
-                'window.dcodeIO': window.dcodeIO,
-                'window.bcryptjs': typeof window.bcryptjs,
-                'typeof scrypt': typeof scrypt,
-                'window.scrypt': typeof window.scrypt,
-                'All window keys': Object.keys(window).filter(key => key.toLowerCase().includes('crypt'))
-            });
-            
-            // Try multiple detection methods for bcrypt
             if (typeof dcodeIO !== 'undefined' && dcodeIO && dcodeIO.bcrypt) {
                 bcryptLib = dcodeIO.bcrypt;
-                console.log('BCrypt detected via dcodeIO.bcrypt');
             } else if (typeof bcrypt !== 'undefined' && bcrypt && bcrypt.genSaltSync) {
                 bcryptLib = bcrypt;
-                console.log('BCrypt detected via global bcrypt');
             } else if (typeof window !== 'undefined' && window.dcodeIO && window.dcodeIO.bcrypt) {
                 bcryptLib = window.dcodeIO.bcrypt;
-                console.log('BCrypt detected via window.dcodeIO.bcrypt');
             } else if (typeof window !== 'undefined' && window.bcrypt && window.bcrypt.genSaltSync) {
                 bcryptLib = window.bcrypt;
-                console.log('BCrypt detected via window.bcrypt');
             } else if (typeof window !== 'undefined' && window.bcryptjs) {
                 bcryptLib = window.bcryptjs;
-                console.log('BCrypt detected via window.bcryptjs');
             }
-            
-            // Try detection methods for scrypt
+
             if (typeof scrypt !== 'undefined' && scrypt && scrypt.scrypt) {
                 scryptLib = scrypt;
-                console.log('SCrypt detected via global scrypt');
             } else if (typeof window !== 'undefined' && window.scrypt && window.scrypt.scrypt) {
                 scryptLib = window.scrypt;
-                console.log('SCrypt detected via window.scrypt');
             }
-            
-            console.log('BCrypt library detected:', bcryptLib ? 'Yes' : 'No');
-            if (bcryptLib) {
-                console.log('BCrypt methods available:', {
-                    'genSaltSync': typeof bcryptLib.genSaltSync,
-                    'hashSync': typeof bcryptLib.hashSync,
-                    'available methods': Object.keys(bcryptLib)
-                });
-            }
-            
-            console.log('SCrypt library detected:', scryptLib ? 'Yes' : 'No');
-            if (scryptLib) {
-                console.log('SCrypt methods available:', {
-                    'scrypt': typeof scryptLib.scrypt,
-                    'available methods': Object.keys(scryptLib)
-                });
-            }
-            
+
             return (bcryptLib !== null) || (scryptLib !== null);
         }
         
@@ -468,7 +430,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         // Retry detection after a delay to handle async loading
         setTimeout(() => {
             if (!bcryptLib || !scryptLib) {
-                console.log('Retrying crypto libraries detection after delay...');
                 detectBcryptLibrary();
             }
         }, 1000);
@@ -480,27 +441,18 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                    typeof window.crypto.subtle !== 'undefined';
         }
 
-        // Fallback for crypto.getRandomValues when Web Crypto API is not available
+        // Password salts must never fall back to predictable randomness.
         function getRandomBytes(length) {
             if (isWebCryptoAvailable()) {
                 return crypto.getRandomValues(new Uint8Array(length));
-            } else {
-                // Fallback using Math.random (less secure but functional)
-                console.warn('Using fallback random generation (less secure). Consider using HTTPS for better security.');
-                const bytes = new Uint8Array(length);
-                for (let i = 0; i < length; i++) {
-                    bytes[i] = Math.floor(Math.random() * 256);
-                }
-                return bytes;
             }
+            throw new Error('Secure random generation requires HTTPS or localhost');
         }
         
         // Show warning about insecure context
         function showSecurityWarning() {
             if (!isWebCryptoAvailable() && !window.securityWarningShown) {
                 window.securityWarningShown = true;
-                console.warn('Web Crypto API not available. Using fallback implementations. For better security, access the application over HTTPS or localhost.');
-                
                 // Show user-visible warning
                 const warning = document.createElement('div');
                 warning.className = 'alert alert-warning alert-dismissible fade show';
@@ -510,7 +462,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 warning.style.zIndex = '9999';
                 warning.style.maxWidth = '350px';
                 warning.innerHTML = `
-                    <strong>Security Notice:</strong> Using fallback cryptography. For enhanced security, access this page over HTTPS or localhost.
+                    <strong>Security Notice:</strong> Web Crypto is unavailable. Random-salt algorithms will fail closed; use HTTPS or localhost.
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 `;
                 document.body.appendChild(warning);
@@ -644,7 +596,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 const dangerousExtensions = ['.exe', '.scr', '.bat', '.cmd', '.com', '.pif', '.vbs', '.js', '.jar'];
                 const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
                 if (dangerousExtensions.includes(extension)) {
-                    console.warn(`Warning: Processing potentially dangerous file type: ${file.name}`);
                 }
             }
 
@@ -850,60 +801,36 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 }
             }
 
-            // Secure memory cleanup
+            // Browser runtimes cannot guarantee memory erasure; clear the visible value only.
             static clearSensitiveData(element) {
-                if (element && element.value) {
-                    // Overwrite with random data before clearing
-                    const length = element.value.length;
-                    element.value = Array(length).fill(0).map(() => Math.random().toString(36)).join('').substring(0, length);
-                    setTimeout(() => {
-                        element.value = '';
-                    }, 100);
-                }
+                if (element) element.value = '';
             }
         }
 
         class PasswordHashGenerator {
             constructor() {
-                console.log('=== PasswordHashGenerator constructor started ===');
                 this.selectedFiles = new Set();
-                this.selectedHash = 'md5';
+                this.selectedHash = 'sha256';
                 this.maxFiles = MAX_FILES;
                 this.autoClearTimer = null;
                 this.autoClearInterval = this.getTimeoutFromStorage(); // Load from storage
-                console.log('Initial autoClearInterval:', this.autoClearInterval);
-                
                 // Check for secure context and warn if not
                 this.checkSecurityContext();
                 
                 this.initializeTheme();
-                console.log('Theme initialized');
-                
                 this.initializeTimeout();
-                console.log('Timeout initialized');
-                
                 this.initializeHashAlgorithm();
-                console.log('Hash algorithm initialized');
-                
                 this.initializeFormDefaults();
-                console.log('Form defaults initialized');
-                
                 this.initializeEventListeners();
-                console.log('Event listeners initialized');
-                
                 this.startAutoClearTimer();
-                console.log('Auto-clear timer started');
-                
-                console.log('=== PasswordHashGenerator constructor completed ===');
             }
 
             checkSecurityContext() {
                 if (!SecureHashUtils.isSecureContext()) {
-                    console.warn('Non-secure context detected. Falling back to CryptoJS for cryptographic operations.');
                     // Show warning to user about non-secure context
                     setTimeout(() => {
                         this.showWarning(
-                            'Warning: You are accessing this page over HTTP. For enhanced security, consider using HTTPS. Cryptographic operations will use fallback implementations.', 
+                            'Web Crypto is unavailable. Random-salt algorithms will fail closed; use HTTPS or localhost.',
                             'warning', 
                             8000
                         );
@@ -951,12 +878,11 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             }
 
             initializeHashAlgorithm() {
-                // Ensure MD5 is always selected by default on page load
-                document.getElementById('md5').checked = true;
-                this.selectedHash = 'md5';
+                document.getElementById('sha256').checked = true;
+                this.selectedHash = 'sha256';
                 
                 // Clear any other selections that might have been restored by browser
-                ['sha256', 'sha512', 'bcrypt', 'scrypt', 'argon2'].forEach(id => {
+                ['md5', 'sha512', 'bcrypt', 'scrypt', 'argon2'].forEach(id => {
                     document.getElementById(id).checked = false;
                 });
             }
@@ -991,26 +917,17 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             }
 
             initializeTimeout() {
-                console.log('=== initializeTimeout() called ===');
-                
                 // Set up timeout selector
                 const timeoutSelect = document.getElementById('timeoutSelect');
-                console.log('Timeout select element:', timeoutSelect);
                 
                 if (!timeoutSelect) {
-                    console.error('timeoutSelect element not found!');
-                    // Try to find all select elements
-                    const allSelects = document.querySelectorAll('select');
-                    console.log('All select elements found:', allSelects);
                     return;
                 }
                 
                 const savedTimeout = localStorage.getItem('autoClearTimeout') || '120';
                 timeoutSelect.value = savedTimeout;
-                console.log('Set timeout value to:', savedTimeout);
                 
                 timeoutSelect.addEventListener('change', (e) => {
-                    console.log('Timeout changed to:', e.target.value);
                     const timeoutSeconds = parseInt(e.target.value);
                     this.autoClearInterval = timeoutSeconds * 1000;
                     localStorage.setItem('autoClearTimeout', timeoutSeconds.toString());
@@ -1018,7 +935,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     this.showWarning(`Auto-clear timeout updated to ${timeoutSeconds / 60} minute${timeoutSeconds / 60 > 1 ? 's' : ''}`, 'info', 3000);
                 });
                 
-                console.log('=== initializeTimeout() completed ===');
             }
 
             initializeEventListeners() {
@@ -1124,7 +1040,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
             addActivityListeners() {
                 // List of events that indicate user activity
-                const activityEvents = ['click', 'keydown', 'mousemove', 'input', 'change'];
+                const activityEvents = ['click', 'keydown', 'input', 'change'];
                 
                 activityEvents.forEach(eventType => {
                     document.addEventListener(eventType, () => {
@@ -1341,7 +1257,6 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     document.getElementById('copyBtn').disabled = false;
 
                 } catch (error) {
-                    console.error('Error generating password:', error);
                     this.showWarning(`Generation failed: ${error.message}`);
                     // Clear any partial results
                     SecureHashUtils.clearSensitiveData(document.getElementById('generatedPassword'));
@@ -1366,33 +1281,10 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 const generatedPassword = document.getElementById('generatedPassword');
                 
                 try {
-                    // Use modern clipboard API if available
-                    if (navigator.clipboard && window.isSecureContext) {
-                        // Temporarily show password to get its value
-                        const wasPassword = generatedPassword.type === 'password';
-                        if (wasPassword) {
-                            generatedPassword.type = 'text';
-                        }
-                        
-                        await navigator.clipboard.writeText(generatedPassword.value);
-                        
-                        if (wasPassword) {
-                            generatedPassword.type = 'password';
-                        }
-                    } else {
-                        // Fallback for older browsers
-                        const wasPassword = generatedPassword.type === 'password';
-                        if (wasPassword) {
-                            generatedPassword.type = 'text';
-                        }
-                        
-                        generatedPassword.select();
-                        document.execCommand('copy');
-                        
-                        if (wasPassword) {
-                            generatedPassword.type = 'password';
-                        }
+                    if (!navigator.clipboard || !window.isSecureContext) {
+                        throw new Error('Clipboard access requires HTTPS or localhost');
                     }
+                    await navigator.clipboard.writeText(generatedPassword.value);
 
                     // Show feedback
                     const copyBtn = document.getElementById('copyBtn');
@@ -1400,13 +1292,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     copyBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
                     copyBtn.classList.add('btn-success');
                     copyBtn.classList.remove('btn-outline-secondary');
-                    
-                    // Auto-clear clipboard after 30 seconds for security
-                    setTimeout(async () => {
-                        if (navigator.clipboard && window.isSecureContext) {
-                            await navigator.clipboard.writeText('');
-                        }
-                    }, 30000);
+                    this.showWarning('Copied. Clipboard history may retain the value; clear it using your operating system.');
                     
                     setTimeout(() => {
                         copyBtn.innerHTML = originalText;
@@ -1415,8 +1301,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     }, 2000);
 
                 } catch (error) {
-                    console.error('Copy failed:', error);
-                    this.showWarning('Failed to copy to clipboard');
+                    this.showWarning(error.message || 'Failed to copy to clipboard');
                 }
             }
 
@@ -1440,7 +1325,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 
                 // Reset form controls
                 document.getElementById('showPasswordCheck').checked = false;
-                document.getElementById('md5').checked = true;
+                document.getElementById('sha256').checked = true;
                 document.getElementById('iterations').value = '1';
                 document.getElementById('iterationsValue').textContent = '1';
 
@@ -1450,23 +1335,13 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                 document.getElementById('fileInput').value = '';
 
                 // Reset hash algorithm
-                this.selectedHash = 'md5';
+                this.selectedHash = 'sha256';
 
                 // Reset password visibility
                 this.toggleAllPasswordVisibility(false);
 
-                // Clear clipboard
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText('').catch(console.error);
-                }
-
                 // Disable copy button
                 document.getElementById('copyBtn').disabled = true;
-
-                // Force garbage collection of sensitive data
-                if (window.gc && typeof window.gc === 'function') {
-                    setTimeout(window.gc, 1000);
-                }
             }
         }
 

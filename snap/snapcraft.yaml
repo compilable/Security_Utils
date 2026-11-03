@@ -1,5 +1,5 @@
 name: security-utils
-version: '1.0.0'
+version: '3.0.0'
 summary: Web-based security tools for developers and security professionals
 description: |
   Security Utilities is a comprehensive collection of web-based security tools 
@@ -14,7 +14,7 @@ description: |
   - CSRF protection and rate limiting for secure operations
 
   The application runs as a local web server, providing a modern web interface 
-  while maintaining complete data privacy by processing everything locally.
+  with bundled runtime assets and no outbound network permission.
 
 grade: stable
 confinement: strict
@@ -29,26 +29,20 @@ apps:
     daemon: simple
     restart-condition: always
     plugs:
-      - network
       - network-bind
-      - home
-      - desktop
-      - desktop-legacy
 
 parts:
   php:
     plugin: autotools
-    source: https://www.php.net/distributions/php-8.2.25.tar.gz
-    source-checksum: sha256/0d70b9d9f748b62e3d38bf4e9e9dd0e94b8c57f4dc2abe3ff0c1daaa6bd0159a
+    source: https://www.php.net/distributions/php-8.4.27.tar.gz
+    source-checksum: sha256/5bafed9994c1a49796b25b5f61c22c9183bfe046b6acc7b363842d03c77f972f
     autotools-configure-parameters:
       - --enable-gd
       - --with-freetype
       - --with-jpeg
-      - --with-png
       - --enable-fileinfo
       - --enable-session
-      - --disable-cli
-      - --enable-fpm
+      - --enable-cli
       - --prefix=/usr
     build-packages:
       - build-essential
@@ -70,6 +64,9 @@ parts:
       'js/': usr/share/security-utils/js/
       'README.md': usr/share/security-utils/
       'password_hash_gen_doc.html': usr/share/security-utils/
+      'THIRD_PARTY_ASSETS.md': usr/share/security-utils/
+      'THIRD_PARTY_ASSETS.sha256': usr/share/security-utils/
+      'RECOVERY_RELEASE_CHECKLIST.md': usr/share/security-utils/
     stage:
       - usr/share/security-utils/
 

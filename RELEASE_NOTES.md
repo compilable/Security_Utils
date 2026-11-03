@@ -1,11 +1,11 @@
-# Security Utilities v2.0.2 - Release Notes
+# Security Utilities v3.0.0 - Release Notes
 
 **Release Date:** January 19, 2026  
 **GitHub Repository:** [https://github.com/compilable/Security_Utils](https://github.com/compilable/Security_Utils)
 
 ## 🎉 Major Release Highlights
 
-Security Utilities v2.0.2 represents a significant advancement in web-based security tooling, bringing enterprise-grade features, enhanced security measures, and comprehensive deployment options to developers and security professionals.
+Security Utilities v3.0.0 represents a significant advancement in web-based security tooling, bringing enterprise-grade features, enhanced security measures, and comprehensive deployment options to developers and security professionals.
 
 ### Bug fixes / Features
 - [Feature Request :Creating an AppImage so I can execute easily](https://github.com/compilable/Security_Utils/issues/9)
@@ -14,7 +14,7 @@ Security Utilities v2.0.2 represents a significant advancement in web-based secu
 
 ## 🛠️ Core Features
 
-### 1. Password Hash Generator v2.0.2
+### 1. Password Hash Generator v3.0.0
 **Advanced Cryptographic Hash Generation**
 - **Multiple Algorithm Support:** bcrypt, Argon2, scrypt, SHA-256, SHA-512, MD5
 - **Flexible Input Sources:**
@@ -27,7 +27,7 @@ Security Utilities v2.0.2 represents a significant advancement in web-based secu
   - Real-time password strength analysis
   - Hash verification and comparison capabilities
 - **Security Features:**
-  - Client-side processing for complete data privacy
+  - Client-side processing with locally bundled runtime assets
   - Auto-clear functionality after 1 minute of inactivity
   - Rate limiting (once per second) to prevent abuse
   - CSRF protection with session-based tokens
@@ -196,7 +196,7 @@ Security Utilities offers 5 comprehensive deployment methods to suit different e
 
 ## ⚡ Breaking Changes
 
-### Version 2.0.0 Changes
+### Version 3.0.0 Changes
 - **API Endpoints:** Updated REST API structure (backward compatibility maintained)
 - **Theme System:** New CSS custom properties (automatic migration)
 - **File Limits:** Updated maximum file sizes (10MB from 5MB)
@@ -233,7 +233,7 @@ Security Utilities offers 5 comprehensive deployment methods to suit different e
 
 **Open Source:** MIT License  
 **Security:** No data collection or telemetry  
-**Privacy:** Complete local processing guarantee  
+**Privacy:** Runtime assets are bundled locally; verify the release checksum and deployment configuration.
 **Compliance:** GDPR and privacy regulation compliant  
 
 ---
@@ -247,4 +247,4 @@ Special thanks to the open source community, security researchers, and beta test
 
 ---
 
-*Security Utilities v2.0.2 - Empowering developers and security professionals with enterprise-grade security tools.*
+*Security Utilities v3.0.0 - Empowering developers and security professionals with enterprise-grade security tools.*

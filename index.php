@@ -1,6 +1,6 @@
 <?php
 // Security headers with enhanced CSP and additional security headers
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src 'none'; object-src 'none'; base-uri 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self';");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
@@ -13,8 +13,8 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Security Utilities Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="css/vendor/bootstrap.min.css" rel="stylesheet">
+    <link href="css/vendor/bootstrap-icons.min.css" rel="stylesheet">
     <link href="css/dashboard.css" rel="stylesheet">
 </head>
 <body>
@@ -68,16 +68,31 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
     <!-- Tools Section -->
     <section class="container">
         <div class="row g-4">
+            <!-- Recovery Key Card -->
+            <div class="col-lg-4">
+                <div class="tool-card p-4 text-center">
+                    <div class="tool-icon text-warning"><i class="bi bi-key"></i></div>
+                    <h3 class="h4 mb-3">Recovery Protocol v1</h3>
+                    <p class="text-muted mb-4">Derive a reproducible recovery credential offline from a 256-bit private seed and canonical context.</p>
+                    <ul class="feature-list mb-4">
+                        <li>HKDF-SHA-512 via Web Crypto</li>
+                        <li>Explicit versioned byte encoding</li>
+                        <li>Independent known-answer vectors</li>
+                        <li>Non-secret recovery manifest</li>
+                    </ul>
+                    <a href="recovery_key.php" class="btn btn-launch"><i class="bi bi-play-circle"></i> Launch Recovery Tool</a>
+                </div>
+            </div>
+
             <!-- Password Hash Generator Card -->
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <div class="tool-card p-4 text-center">
                     <div class="tool-icon text-primary">
                         <i class="bi bi-shield-lock"></i>
                     </div>
-                    <h3 class="h4 mb-3">Password Hash Generator</h3>
+                    <h3 class="h4 mb-3">Legacy Hash Compatibility</h3>
                     <p class="text-muted mb-4">
-                        Generate and verify secure password hashes using industry-standard algorithms 
-                        including bcrypt, Argon2, scrypt, and various SHA implementations.
+                        Preserve historical hash outputs and generate random-salt verification hashes. Not for deterministic recovery.
                     </p>
                     
                     <div class="mb-4">
@@ -85,7 +100,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                         <ul class="feature-list">
                             <li>Multiple hashing algorithms (bcrypt, Argon2, scrypt)</li>
                             <li>Password verification and comparison</li>
-                            <li>Secure client-side processing</li>
+                            <li>Offline client-side processing</li>
                             <li>Dark/Light theme support</li>
                             <li>Real-time strength analysis</li>
                             <li>Export hash results</li>
@@ -93,12 +108,12 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
                     </div>
                     
                     <div class="mb-3">
-                        <span class="badge bg-success me-2">v2.0.2</span>
+                        <span class="badge bg-success me-2">v3.0.0</span>
                         <span class="badge bg-outline-primary me-2">
                             <i class="bi bi-cpu"></i> Client-side
                         </span>
-                        <span class="badge bg-outline-success">
-                            <i class="bi bi-shield-check"></i> Secure
+                        <span class="badge bg-outline-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Legacy
                         </span>
                     </div>
                     
@@ -109,7 +124,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
             </div>
 
             <!-- Image Randomizer Card -->
-            <div class="col-lg-6">
+            <div class="col-lg-4">
                 <div class="tool-card p-4 text-center">
                     <div class="tool-icon text-success">
                         <i class="bi bi-image"></i>
@@ -254,7 +269,7 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

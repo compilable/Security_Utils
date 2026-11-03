@@ -8,7 +8,7 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 // Security headers
-header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net; manifest-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self';");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'none'; manifest-src 'none'; media-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self';");
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: DENY");
 header("X-XSS-Protection: 1; mode=block");
@@ -435,11 +435,11 @@ if (isset($_GET['serve']) && isset($_GET['file'])) {
         header('Cache-Control: private, max-age=1800, no-transform');
         header('X-Content-Type-Options: nosniff');
         header('Content-Disposition: inline; filename="' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '"');
-        
-if (($_SERVER['REQUEST_METHOD'] ?? null) === 'POST' && isset($_FILES['images'])) {
+
+        readfile($filePath);
         exit;
     }
-    
+
     // File not found or invalid
     http_response_code(404);
     exit('File not found');
@@ -626,8 +626,8 @@ if ($files) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Randomizer</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="css/vendor/bootstrap.min.css" rel="stylesheet">
+    <link href="css/vendor/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         :root {
             --bg-color: #f8f9fa;
@@ -957,7 +957,7 @@ if ($files) {
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <script>
         // Theme management
         function initializeTheme() {

@@ -48,7 +48,13 @@ if ! docker build -t sec-utils . >/dev/null 2>&1; then
 fi
 
 # Run the container
-if docker run -d --name "$CONTAINER_NAME" -p "$PORT:80" -v "$(pwd):/var/www/html" sec-utils >/dev/null 2>&1; then
+if docker run -d --name "$CONTAINER_NAME" --read-only \
+    --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+    --tmpfs /var/run/apache2:rw,nosuid,nodev,size=1m \
+    --tmpfs /var/lock/apache2:rw,nosuid,nodev,size=1m \
+    --tmpfs /var/www/html/temp:rw,noexec,nosuid,nodev,size=16m,uid=33,gid=33,mode=0750 \
+    --cap-drop ALL --cap-add CHOWN --cap-add DAC_OVERRIDE --cap-add SETGID --cap-add SETUID --cap-add NET_BIND_SERVICE \
+    --security-opt no-new-privileges -p "127.0.0.1:$PORT:80" sec-utils >/dev/null 2>&1; then
     echo "✅ Security Utilities started successfully!"
     echo "   🌐 Dashboard: http://localhost:$PORT"
     echo "   🔐 Password Hash Generator: http://localhost:$PORT/password_hash_gen.php"

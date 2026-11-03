@@ -1,21 +1,10 @@
 {
     "app-id": "dev.secutils.SecurityUtils",
     "runtime": "org.freedesktop.Platform",
-    "runtime-version": "23.08",
+    "runtime-version": "25.08",
     "sdk": "org.freedesktop.Sdk",
     "command": "security-utils",
-    "finish-args": [
-        "--socket=x11",
-        "--share=ipc",
-        "--socket=wayland",
-        "--device=dri",
-        "--share=network",
-        "--filesystem=host:create",
-        "--filesystem=xdg-download:rw",
-        "--talk-name=org.freedesktop.FileManager1",
-        "--own-name=org.mpris.MediaPlayer2.SecurityUtils",
-        "--socket=pulseaudio"
-    ],
+    "finish-args": [],
     "modules": [
         {
             "name": "php",
@@ -24,55 +13,15 @@
                 "--enable-gd",
                 "--with-freetype",
                 "--with-jpeg",
-                "--with-png",
                 "--enable-fileinfo",
                 "--enable-session",
-                "--disable-cli",
-                "--enable-fpm"
+                "--enable-cli"
             ],
             "sources": [
                 {
                     "type": "archive",
-                    "url": "https://www.php.net/distributions/php-8.2.25.tar.gz",
-                    "sha256": "0d70b9d9f748b62e3d38bf4e9e9dd0e94b8c57f4dc2abe3ff0c1daaa6bd0159a"
-                }
-            ],
-            "modules": [
-                {
-                    "name": "libpng",
-                    "buildsystem": "cmake-ninja",
-                    "sources": [
-                        {
-                            "type": "git",
-                            "url": "https://git.code.sf.net/p/libpng/code",
-                            "tag": "v1.6.40"
-                        }
-                    ]
-                },
-                {
-                    "name": "libjpeg-turbo",
-                    "buildsystem": "cmake-ninja",
-                    "sources": [
-                        {
-                            "type": "git",
-                            "url": "https://github.com/libjpeg-turbo/libjpeg-turbo.git",
-                            "tag": "3.0.1"
-                        }
-                    ]
-                },
-                {
-                    "name": "freetype2",
-                    "buildsystem": "meson",
-                    "config-opts": [
-                        "-Dharfbuzz=disabled"
-                    ],
-                    "sources": [
-                        {
-                            "type": "git",
-                            "url": "https://gitlab.freedesktop.org/freetype/freetype.git",
-                            "tag": "VER-2-13-2"
-                        }
-                    ]
+                    "url": "https://www.php.net/distributions/php-8.4.27.tar.gz",
+                    "sha256": "5bafed9994c1a49796b25b5f61c22c9183bfe046b6acc7b363842d03c77f972f"
                 }
             ]
         },
@@ -81,7 +30,7 @@
             "buildsystem": "simple",
             "build-commands": [
                 "install -d /app/share/security-utils",
-                "cp -r *.php css js password_hash_gen_doc.html README.md /app/share/security-utils/",
+                "cp -r *.php css js password_hash_gen_doc.html README.md THIRD_PARTY_ASSETS.md THIRD_PARTY_ASSETS.sha256 RECOVERY_RELEASE_CHECKLIST.md /app/share/security-utils/",
                 "install -Dm755 flatpak-wrapper.sh /app/bin/security-utils",
                 "install -Dm644 dev.secutils.SecurityUtils.desktop /app/share/applications/dev.secutils.SecurityUtils.desktop",
                 "install -Dm644 dev.secutils.SecurityUtils.svg /app/share/icons/hicolor/scalable/apps/dev.secutils.SecurityUtils.svg",

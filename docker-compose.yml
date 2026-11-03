@@ -4,12 +4,16 @@ services:
     #image: your-username/security-utils:latest
     build: .  # Keep commented for local development
     ports:
-      - "3020:80"
-    volumes:
-      - temp_volume:/var/www/html/temp
+      - "127.0.0.1:3020:80"
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+      - /var/run/apache2:rw,nosuid,nodev,size=1m
+      - /var/lock/apache2:rw,nosuid,nodev,size=1m
+      - /var/www/html/temp:rw,noexec,nosuid,nodev,size=16m,uid=33,gid=33,mode=0750
     # Security: Resource limits to prevent DoS
     deploy:
       resources:
@@ -21,17 +25,18 @@ services:
           memory: 256M
     # Security: Drop dangerous capabilities and prevent CVE-2024-4577 exploitation
     cap_drop:
-      - NET_ADMIN
-      - SYS_ADMIN
-      - MKNOD
-      - SETUID
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
       - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
     security_opt:
       - no-new-privileges:true
-      - seccomp:unconfined
     labels:
       - "com.docker.compose.project=sec_utils"
-      - "description=Password Hash Generator v2.0.2 - Secure Configuration"
+      - "description=Password Hash Generator v3.0.0 - Secure Configuration"
       - "security.hardened=true"
     # Health check
     healthcheck:
@@ -40,8 +45,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-# Security: Named volumes with specific permissions
-volumes:
-  temp_volume:
-    driver: local

@@ -37,6 +37,11 @@ else
     echo "✅ PHP found: $(php --version | head -n1)"
 fi
 
+if ! php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);'; then
+    echo "❌ PHP 8.4.27 or newer is required for the current security fixes."
+    exit 1
+fi
+
 # Check required PHP extensions
 check_extension() {
     if ! php -m | grep -q "$1"; then
@@ -74,6 +79,7 @@ cp -r ./js "$INSTALL_DIR/" 2>/dev/null || true
 cp ./README.md "$INSTALL_DIR/" 2>/dev/null || true
 cp ./docker-compose.yml "$INSTALL_DIR/" 2>/dev/null || true
 cp ./Dockerfile "$INSTALL_DIR/" 2>/dev/null || true
+cp ./THIRD_PARTY_ASSETS.md ./THIRD_PARTY_ASSETS.sha256 ./RECOVERY_RELEASE_CHECKLIST.md "$INSTALL_DIR/" 2>/dev/null || true
 
 # Create launcher script
 echo "🚀 Creating launcher script..."
@@ -102,7 +108,7 @@ echo "Press Ctrl+C to stop the server..."
 mkdir -p temp
 
 # Start PHP built-in server
-php -S localhost:$PORT &
+php -d allow_url_fopen=0 -d allow_url_include=0 -d session.upload_progress.enabled=0 -d expose_php=0 -S 127.0.0.1:$PORT &
 PHP_PID=$!
 
 # Function to cleanup on exit

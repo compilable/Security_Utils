@@ -1,5 +1,5 @@
-# Security: Use patched PHP version to fix CVE-2024-4577, CVE-2026-25646 (LIBPNG), CVE-2025-68973 and CVE-2025-69420
-FROM php:8.4.18-apache
+# Security: Keep this on a patched PHP release; 8.4.27 fixes CVE-2026-109618 and CVE-2026-109619.
+FROM php:8.4.27-apache@sha256:4af38a0245996e700e20ec211b9f1c44fb789ad8cc7d24c7ea81ff382b641052
 
 # Security: Update system packages first to patch known CVEs including CVE-2025-68973 and CVE-2025-69420
 # Install system dependencies and clean up in single layer
@@ -58,7 +58,7 @@ RUN { \
     echo 'expose_php = Off'; \
     echo 'display_errors = Off'; \
     echo 'log_errors = On'; \
-    echo 'error_log = /var/log/php_errors.log'; \
+    echo 'error_log = /proc/self/fd/2'; \
     echo 'upload_max_filesize = 5M'; \
     echo 'post_max_size = 10M'; \
     echo 'max_execution_time = 30'; \
@@ -66,9 +66,11 @@ RUN { \
     echo 'memory_limit = 128M'; \
     echo 'file_uploads = On'; \
     echo 'upload_tmp_dir = /var/www/html/temp'; \
-    echo 'session.cookie_secure = 1'; \
+    echo 'session.cookie_secure = 0'; \
     echo 'session.cookie_httponly = 1'; \
+    echo 'session.cookie_samesite = Strict'; \
     echo 'session.use_strict_mode = 1'; \
+    echo 'session.upload_progress.enabled = 0'; \
     echo 'allow_url_fopen = Off'; \
     echo 'allow_url_include = Off'; \
     echo '# CVE-2024-4577 mitigation'; \

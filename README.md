@@ -1,587 +1,155 @@
-# Security Utilities
+# Security Utilities 3.0.0
 
-A collection of web-based security tools designed for developers and everyday users.
+Offline-first browser utilities for deterministic recovery-key derivation, legacy hash compatibility, and image processing.
 
-## 🛠️ Tools Included
+## What changed in 3.0.0
 
-### 1. Password Hash Generator v2.0.2
-- **URL**: `http://localhost:8070/password_hash_gen.php`
-- **Features**:
-  - Generate secure password hashes using various algorithms
-  - Verify passwords against existing hashes  
-  - Support for multiple hashing algorithms (BCrypt, SHA256, SHA512, MD5, SCrypt, Argon2)
-  - Configurable iteration count with range slider (1-20 iterations)
-  - Intelligent password handling: single passwords hash directly, complex inputs use HMAC
-  - Multi-input support: combine passwords, files, and security questions
-  - Dark/Light theme support
-  - Secure headers and CSP implementation
-  - Auto-clear timer for sensitive data protection
+- Added the separate, versioned Recovery Protocol v1 with deterministic HKDF-SHA-512 derivation, manifests, validation, and cross-language test vectors.
+- Reclassified the original password generator as a legacy compatibility tool, changed its default from MD5 to SHA-256, and documented its fixed algorithm-specific parameters.
+- Replaced runtime CDN resources with pinned local assets covered by `THIRD_PARTY_ASSETS.sha256`.
+- Updated and pinned the container to PHP 8.4.27, removed mutable `latest` images, and hardened local deployment with localhost-only publishing, a read-only root filesystem, temporary writable storage, and reduced capabilities.
+- Restricted Flatpak and Snap permissions, corrected clipboard and memory-erasure claims, and removed production debug logging and insecure random fallbacks.
+- Added automated security checks, Dependabot configuration, reproducible `3.0.0` archives, checksums, and provenance attestations for tagged GitHub builds.
 
-### 2. Image Randomizer
-- **URL**: `http://localhost:8070/image-randomizer.php`
-- **Features**:
-  - Randomize image file data to avoid forensic detection
-  - Support for JPEG, PNG, GIF, and WebP formats
-  - Configurable randomization cycles
-  - Multiple hash algorithms (MD5, SHA256, SHA512)
-  - File integrity verification
-  - Secure file upload handling
-## 🔄 Recent Improvements
+## Security boundaries
 
-### Password Hash Generator v2.0.2 Updates
-- **Enhanced UI**: Replaced dropdown iteration selector with intuitive range slider (1-20)
-- **Improved Password Handling**: Single passwords now hash directly for standard compatibility
-- **Smart Reset**: Form reset properly restores all controls to default values
-- **Better User Experience**: Real-time iteration count display and responsive controls
+- `recovery_key.php` implements the versioned deterministic Recovery Protocol v1. Use it only with a securely stored 256-bit seed.
+- `password_hash_gen.php` is a legacy compatibility tool. Its bcrypt, scrypt, and Argon2 outputs use random salts and are intentionally not reproducible.
+- Legacy repeat cycles are not a universal security work factor. Each password-hashing algorithm has different fixed parameters.
+- Clearing a field only clears the visible DOM value; JavaScript cannot guarantee memory erasure.
+- Clipboard copying is explicit and clipboard history may retain copied credentials.
+- All runtime JavaScript, CSS, fonts, and cryptographic libraries are bundled locally. Runtime pages do not require internet access.
+- The supplied Docker configuration listens on localhost only. Remote hosting requires TLS, authentication, and a separate security review.
 
-### Security Enhancements
-- Intelligent input processing: single passwords vs. complex multi-input scenarios
-- Maintained HMAC approach for advanced security when combining multiple inputs
-- Standard BCrypt compatibility for single password verification
-## � Deployment Options
+Never replace an existing LUKS2/KDBX4 credential until the new credential unlocks a disposable test copy. Preserve the old tool and matching inputs for old snapshots.
 
-Security Utilities supports multiple deployment methods to suit different environments and preferences:
+## Recovery Protocol v1
 
-| Method | Best For | Requirements | Installation Time |
-|--------|----------|--------------|------------------|
-| **Docker Launcher** | Quick testing, development | Docker | ~30 seconds |
-| **Native Install** | Daily use, performance | PHP 8.2+ | ~2 minutes |
-| **Flatpak** | Sandboxed, universal | Flatpak runtime | ~5 minutes |
-| **Snap** | Ubuntu/derivatives | snapd | ~3 minutes |
-| **AppImage** | Portable, no install | None | ~10 minutes |
+Recovery Protocol v1 is separate from the legacy hash tool:
 
-## �🐳 Getting Started with Docker
+- Required secret: exactly 32 random bytes, entered as 64 hexadecimal characters.
+- KDF: HKDF-SHA-512 using Web Crypto.
+- Output: 32 bytes encoded as unpadded Base64URL.
+- Context: protocol version, public snapshot ID, three ordered optional answers, and optional file records.
+- Text: Unicode NFC followed by UTF-8; values are not trimmed.
+- Fields: tagged and prefixed with unsigned 32-bit big-endian byte lengths.
+- Files: maximum 10 files and 5 MiB each; represented by normalized filename, size, and SHA-512 content digest.
+- File order: lexicographic UTF-8 filename bytes, then SHA-512 digest bytes. Locale-sensitive sorting is never used.
+- Missing answers: explicit empty Q1/Q2/Q3 fields.
+- Fixed HKDF info: `Security Utils Recovery Key v1`.
 
-### Prerequisites
-- Docker
-- Docker Compose (optional - included in Docker Desktop)
+The downloadable non-secret manifest records these parameters, snapshot ID, release-archive SHA-256, context digest, file identifiers/digests, and an optional disposable-copy verification date. Loading that manifest makes derivation fail if the protocol version or canonical context differs. It never contains the private seed, answers, or derived credential. File digests may still reveal whether someone possesses a known file; protect the manifest when that matters.
 
-### Quick Start Options
+HKDF is appropriate here because the protocol requires a high-entropy seed. Human answers and files provide context but are not treated as a replacement for seed entropy. The construction requires independent review before use as the sole recovery mechanism for irreplaceable data.
 
-#### Option 1: Docker Launcher Script (Recommended)
+Follow [Recovery Protocol v1.md](Recovery%20Protocol%20v1.md) for enrollment, disposable LUKS2/KDBX4 verification, routine recovery, and failure handling.
 
-The easiest way to get started is using our automated launcher script:
+## Run locally
 
-1. **Clone or download the project**
-   ```bash
-   git clone https://github.com/compilable/Security_Utils.git
-   cd Security_Utils
-   ```
-
-2. **Run the launcher script**
-   ```bash
-   ./run-security-utils.sh
-   ```
-
-The launcher script will:
-- ✅ Check Docker installation and guide you if missing
-- 🔄 Automatically build/pull the Docker image
-- 🚀 Start the container with proper port management
-- 🌐 Open your browser automatically to the dashboard
-- 🛡️ Handle port conflicts and container cleanup
-- ⏹️ Provide easy stop/restart options
-
-#### Option 2: Published Docker Image (Quick Start)
-
-For the fastest setup using our published image:
-
-1. **Pull and run directly**
-   ```bash
-   docker run -d -p 8070:80 --name security-utils your-username/security-utils:latest
-   ```
-
-2. **Or use Docker Compose with published image**
-   ```bash
-   # Download just the docker-compose.yml
-   wget https://raw.githubusercontent.com/compilable/Security_Utils/main/docker-compose.yml
-   docker-compose up -d
-   ```
-
-3. **Access the tools**
-   - Dashboard: http://localhost:8070/
-   - Password Hash Generator: http://localhost:8070/password_hash_gen.php
-   - Image Randomizer: http://localhost:8070/image-randomizer.php
-
-#### Option 3: Manual Docker Compose
-
-If you prefer manual control:
-
-1. **Clone or download the project**
-   ```bash
-   git clone https://github.com/compilable/Security_Utils.git
-   cd Security_Utils
-   ```
-
-2. **Start the application**
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Access the tools**
-   - Dashboard: http://localhost:8070/
-   - Password Hash Generator: http://localhost:8070/password_hash_gen.php
-   - Image Randomizer: http://localhost:8070/image-randomizer.php
-
-4. **Stop the application**
-   ```bash
-   docker-compose down
-   ```
-
-## 💻 Native Installation
-
-### Prerequisites
-- PHP 8.4.18 or higher
-- PHP GD extension
-- Web browser
-
-### Quick Install
+Requirements: Docker with Compose, or PHP 8.4.27+ with `gd` and `fileinfo`.
 
 ```bash
-# Run the installation script
-./install-native.sh
-
-# Launch from applications menu or command line
-security-utils
+git clone https://github.com/compilable/Security_Utils.git
+cd Security_Utils
+docker compose up -d --build
 ```
 
-### Features
-- **Auto-dependency detection**: Installs PHP on Ubuntu, Fedora, Arch, openSUSE
-- **Desktop integration**: Adds application menu entry and launcher
-- **System integration**: Creates command-line utility
-- **Clean uninstall**: Includes removal script
-- **Multiple distributions**: Supports major Linux package managers
+Open:
 
-### Manual Installation
+- Dashboard: <http://localhost:3020/>
+- Recovery Protocol v1: <http://localhost:3020/recovery_key.php>
+- Legacy hash compatibility: <http://localhost:3020/password_hash_gen.php>
+- Image randomizer: <http://localhost:3020/image-randomizer.php>
 
-If you prefer manual setup:
+Stop with `docker compose down`.
+
+Native local-only run with the same PHP restrictions used by the installer:
 
 ```bash
-# Install PHP (Ubuntu/Debian)
-sudo apt install php php-gd php-cli
-
-# Install PHP (Fedora/RHEL)
-sudo dnf install php php-gd php-cli
-
-# Install PHP (Arch Linux)
-sudo pacman -S php php-gd
-
-# Run the application
-php -S localhost:8070
+php -d allow_url_fopen=0 \
+    -d allow_url_include=0 \
+    -d session.upload_progress.enabled=0 \
+    -d expose_php=0 \
+    -S 127.0.0.1:8070
 ```
 
-### Docker Configuration
+Do not bind the PHP development server to a public interface.
 
-The application runs on **port 8070** by default. You can modify this in the `docker-compose.yml` file:
+## Offline verification
 
-```yaml
-ports:
-  - "8070:80"  # Change 8070 to your desired port
-```
-
-### Container Details
-
-- **Base Image**: PHP 8.2 with Apache
-- **Container Name**: password-hash-generator
-- **Features**:
-  - GD extension for image processing
-  - Apache mod_rewrite enabled
-  - Secure file permissions
-  - Volume mounting for development
-
-### Docker Launcher Script Features
-
-The `run-security-utils.sh` script provides advanced container management:
-
-- **Smart Dependency Checking**: Automatically detects and guides Docker installation
-- **Port Management**: Finds available ports if 8070 is busy
-- **Container Lifecycle**: Handles building, starting, stopping, and cleanup
-- **Browser Integration**: Automatically opens the dashboard in your default browser
-- **Error Handling**: Provides clear error messages and troubleshooting guidance
-- **Cross-Platform**: Works on Linux, macOS, and Windows (with WSL/Git Bash)
-
-**Script Usage:**
-```bash
-# Basic start
-./run-security-utils.sh
-
-# Use custom port  
-./run-security-utils.sh --port 8080
-
-# Stop all containers
-./run-security-utils.sh --stop
-
-# Clean restart
-./run-security-utils.sh --restart
-
-# Show help
-./run-security-utils.sh --help
-```
-
-## 🏗️ Build System
-
-### Universal Build Script
-
-The `build.sh` script creates packages for all supported formats:
+Verify vendored assets and run protocol vectors:
 
 ```bash
-# Build all formats
-./build.sh all
-
-# Build specific formats
-./build.sh docker native flatpak
-
-# Clean build and rebuild
-./build.sh --clean all
-
-# Show available options
-./build.sh --help
+sha256sum --check THIRD_PARTY_ASSETS.sha256
+node test/test_recovery_protocol.js
+python3 test/test_recovery_protocol.py
+test/security_checks.sh
 ```
 
-### Supported Package Formats
+The JavaScript and independent Python implementations must produce:
 
-#### Flatpak Package
-```bash
-# Build Flatpak package
-./build.sh flatpak
-
-# Manual build (requires flatpak-builder)
-cd build/flatpak
-flatpak-builder build-dir dev.secutils.SecurityUtils.json --force-clean
-flatpak-builder --user --install --force-clean build-dir dev.secutils.SecurityUtils.json
+```text
+AZ2FB-zw4kL7CjEHFlY5RwmuhhhGahrNKWaYhnjgcRw
 ```
 
-#### Snap Package
-```bash
-# Build Snap package
-./build.sh snap
+for the committed Recovery Protocol v1 test vector. The test also checks file-order independence, changed-input divergence, invalid seeds, missing snapshot IDs, wrong manifest versions, and context mismatches caused by missing or changed inputs.
 
-# Manual build (requires snapcraft)
-cd build/snap
-snapcraft
-sudo snap install --dangerous security-utils_1.0.0_amd64.snap
-```
+## Release process
 
-#### AppImage (Portable)
-```bash
-# Build AppImage (requires appimage-builder)
-./build.sh appimage
+`./build.sh release` creates:
 
-# Run the portable application
-./build/security-utils-1.0.0-x86_64.AppImage
-```
+- `build/release/security-utils-3.0.0.tar.gz`
+- `build/release/security-utils-3.0.0.tar.gz.sha256`
 
-### Distribution Files
-
-After building, you'll find:
-
-```
-build/
-├── run-security-utils.sh           # Docker launcher
-├── install-native.sh               # Native installer
-├── security-utils-1.0.0-x86_64.AppImage  # Portable app
-├── flatpak/                        # Flatpak package files
-│   ├── dev.secutils.SecurityUtils.json
-│   └── BUILD.md                    # Build instructions
-└── snap/                           # Snap package files
-    ├── snapcraft.yaml
-    └── BUILD.md                    # Build instructions
-```
-
-## 🔧 Development
-
-### Local Development Setup
-
-The application uses volume mounting, so changes to your local files will be reflected immediately in the container.
-
-### Publishing Docker Images
-
-For maintainers wanting to publish updated images:
+A pushed `v3.0.0` tag runs the same tests and generates a Sigstore-backed provenance attestation. Verify the checksum and attestation from the directory containing the downloaded files:
 
 ```bash
-# Build and tag the image
-docker build -t your-username/security-utils:v2.0.2 -t your-username/security-utils:latest .
-
-# Login to Docker Hub or GitHub Container Registry
-docker login  # For Docker Hub
-# OR
-echo $GITHUB_TOKEN | docker login ghcr.io -u your-username --password-stdin  # For GHCR
-
-# Push to registry
-docker push your-username/security-utils:v2.0.2
-docker push your-username/security-utils:latest
-
-# For GitHub Container Registry, use:
-# docker push ghcr.io/your-username/security-utils:v2.0.2
-# docker push ghcr.io/your-username/security-utils:latest
+sha256sum --check security-utils-3.0.0.tar.gz.sha256
+gh attestation verify security-utils-3.0.0.tar.gz -R compilable/Security_Utils
 ```
 
-**Automated Publishing with GitHub Actions:**
+Images and runtime sources are version-pinned. Do not publish mutable `latest` tags. `THIRD_PARTY_ASSETS.sha256` is the dependency lock for bundled browser assets.
 
-Create `.github/workflows/docker-publish.yml`:
-```yaml
-name: Docker Publish
+## Recovery release gates
 
-on:
-  release:
-    types: [published]
-  push:
-    branches: [main]
+Automation cannot prove real recovery. Before calling a release recovery-ready, record successful checks for:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    - name: Login to Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Build and push
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: |
-          ghcr.io/${{ github.repository }}:latest
-          ghcr.io/${{ github.repository }}:${{ github.ref_name }}
-```
+- a second computer;
+- a second Linux distribution and supported browser;
+- a disposable LUKS2 volume;
+- a disposable KDBX4 database;
+- an independently stored emergency credential;
+- archived prior protocol vectors;
+- an offline trusted-person drill using disposable data;
+- independent cryptographic review of the protocol.
 
-### File Structure
-```
-sec_utils/
-├── index.php                              # Dashboard/Landing page
-├── password_hash_gen.php                  # Password Hash Generator
-├── image-randomizer.php                   # Image Randomizer tool
-├── css/                                   # Stylesheet files
-│   └── dashboard.css                     # Dashboard styles
-├── js/                                    # JavaScript files  
-│   └── dashboard.js                      # Dashboard interactions
-├── password_hash_gen_doc.html             # Documentation
-├── docker-compose.yml                     # Docker Compose configuration
-├── Dockerfile                            # Docker image configuration
-├── run-security-utils.sh                 # Docker launcher script
-├── install-native.sh                     # Native installation script
-├── build.sh                              # Multi-format build script
-├── dev.secutils.SecurityUtils.json       # Flatpak manifest
-├── flatpak-wrapper.sh                    # Flatpak execution wrapper
-├── dev.secutils.SecurityUtils.desktop    # Desktop entry file
-├── dev.secutils.SecurityUtils.svg        # Application icon
-├── dev.secutils.SecurityUtils.appdata.xml # App metadata
-├── snap/                                  # Snap package files
-│   ├── snapcraft.yaml                   # Snap configuration
-│   └── security-utils-wrapper           # Snap execution wrapper
-├── build/                                 # Generated packages (after build)
-│   ├── run-security-utils.sh            # Docker launcher copy
-│   ├── install-native.sh                # Native installer copy
-│   ├── security-utils-1.0.0-x86_64.AppImage # Portable application
-│   ├── flatpak/                         # Flatpak build files
-│   └── snap/                            # Snap build files
-└── README.md                             # This file
-```
+Use [RECOVERY_RELEASE_CHECKLIST.md](RECOVERY_RELEASE_CHECKLIST.md) for the sign-off record.
 
-### Building the Image
+## Legacy compatibility tool
 
-To build the Docker image locally:
+The legacy tool preserves its historical trimming, combination, and repeat-cycle behavior so existing outputs remain reproducible where the selected algorithm itself is deterministic. SHA-256 is now the safe default; MD5 remains only for legacy integrity compatibility. Random-salt bcrypt, scrypt, and Argon2 remain suitable for password verification but not deterministic recovery.
 
-```bash
-docker build -t sec-utils .
-```
+See `password_hash_gen_doc.html` for exact limitations and parameters.
 
-### Customization
+## Deployment notes
 
-- **Upload Directory**: Images are processed in the system temp directory
-- **File Size Limits**: Maximum 10MB per file, up to 10 files  
-- **Password Hash Generator**: Configurable iterations (1-20), multiple algorithms supported
-- **Single vs Multi-Input**: Automatic detection for optimal hashing approach
-- **Security Headers**: Comprehensive CSP and security headers implemented
-- **Supported Formats**: JPEG, PNG, GIF, WebP
+- Docker publishes only `127.0.0.1:3020` and uses the default seccomp profile, a read-only root filesystem, limited writable temporary filesystems, and reduced capabilities.
+- The Flatpak manifest uses Freedesktop 25.08 and an offline profile without host filesystem or network access.
+- The Snap manifest uses strict confinement with local server binding but no outbound-network, home, or desktop permission.
+- The image has also been exercised with Docker networking disabled. Normal Compose runs use Docker's bridge network so the localhost-published UI remains reachable; PHP URL fetching is disabled and browser CSP restricts connections. Flatpak and Snap package execution remain release-checklist items.
+- Remote deployment is intentionally not configured. Put authentication and HTTPS in front of the application only after a separate threat review.
 
-## 🔒 Security Features
+## Vendored dependencies
 
-- Content Security Policy (CSP) headers
-- X-Frame-Options: DENY
-- X-XSS-Protection enabled
-- No-sniff content type protection
-- Strict referrer policy
-- Secure file upload validation
-- Input sanitization and validation
+- Bootstrap 5.3.8
+- Bootstrap Icons 1.13.1
+- CryptoJS 4.2.0
+- bcryptjs 2.4.3
+- scrypt-js 3.0.1
+- argon2-browser 1.18.0
 
-## 📋 Requirements
+Exact hashes are in `THIRD_PARTY_ASSETS.sha256`. Licenses remain in the upstream distributions and are summarized in `THIRD_PARTY_ASSETS.md`.
 
-- Docker Engine 20.0+
-- Docker Compose 2.0+
-- Web browser with JavaScript enabled
+## License
 
-## 🚀 Production Deployment
-
-### Deployment Method Selection
-
-**For Production Servers:**
-- **Docker**: Best for containerized environments, easy scaling
-- **Native**: Best performance, direct system integration
-- **Snap**: Good for Ubuntu-based production systems
-
-**For End-User Distribution:**
-- **Flatpak**: Universal Linux distribution, sandboxed security
-- **Snap**: Ubuntu Store distribution, automatic updates
-- **AppImage**: Portable, no installation required
-
-### Production Checklist
-
-For any production deployment:
-
-1. **Update security headers** for your domain
-2. **Configure HTTPS** with proper SSL certificates
-3. **Set up proper logging** and monitoring
-4. **Review file upload limits** based on your needs
-5. **Consider firewall rules** for the exposed port
-6. **Test all deployment formats** in your target environment
-7. **Set up backup procedures** for user data and configurations
-
-### Environment Variables
-
-You can customize the deployment using environment variables:
-
-```yaml
-environment:
-  - APACHE_DOCUMENT_ROOT=/var/www/html
-  - PHP_MEMORY_LIMIT=256M
-  - PHP_MAX_UPLOAD_SIZE=10M
-```
-
-## 📝 License
-
-This project is released under an open-source license. See individual tool headers for specific licensing information.
-
-## 🙏 Third-Party Acknowledgments
-
-This project makes use of several excellent third-party libraries and frameworks:
-
-### Frontend Libraries & Frameworks
-- **[Bootstrap 5.3.0](https://getbootstrap.com/)** - Modern CSS framework for responsive design
-  - License: MIT
-  - Used for: UI components, responsive layout, and styling
-  
-- **[Bootstrap Icons 1.7.2](https://icons.getbootstrap.com/)** - Official icon library for Bootstrap
-  - License: MIT  
-  - Used for: UI icons throughout the application
-
-### Cryptographic Libraries (Password Hash Generator)
-- **[CryptoJS 4.1.1](https://cryptojs.gitbook.io/docs/)** - JavaScript cryptographic library
-  - License: MIT
-  - Used for: MD5, SHA-1, SHA-256, SHA-512, and other hash implementations
-  
-- **[bcryptjs 2.4.3](https://github.com/dcodeIO/bcrypt.js)** - JavaScript bcrypt implementation
-  - License: MIT
-  - Used for: bcrypt password hashing and verification
-  
-- **[scrypt-js 3.0.1](https://github.com/ricmoo/scrypt-js)** - Pure JavaScript scrypt implementation  
-  - License: MIT
-  - Used for: scrypt key derivation function
-  
-- **[argon2-browser 1.18.0](https://github.com/antelle/argon2-browser)** - WebAssembly Argon2 implementation
-  - License: MIT
-  - Used for: Argon2 password hashing (latest security standard)
-
-### Content Delivery Networks
-- **[jsDelivr](https://www.jsdelivr.com/)** - Free CDN for open source projects
-  - Used for: Serving Bootstrap, Bootstrap Icons, bcryptjs, and scrypt-js
-  
-- **[Cloudflare CDN (cdnjs)](https://cdnjs.com/)** - Free CDN service
-  - Used for: Serving CryptoJS library
-  
-- **[unpkg](https://unpkg.com/)** - Fast, global CDN for npm packages  
-  - Used for: Serving argon2-browser library
-
-### Server Environment
-- **[PHP 8.2](https://www.php.net/)** - Server-side scripting language
-  - License: PHP License v3.01
-  - Used for: Backend processing and server-side operations
-  
-- **[Apache HTTP Server](https://httpd.apache.org/)** - Web server software
-  - License: Apache License 2.0
-  - Used for: Web server functionality
-  
-- **[Docker](https://www.docker.com/)** - Containerization platform
-  - Used for: Application deployment and development environment
-
-We extend our sincere gratitude to all the developers and maintainers of these projects for making their excellent work available to the open-source community.
-
-## 📥 Installation Summary
-
-### Quick Start (Choose One)
-
-```bash
-# Docker (Recommended for testing)
-./run-security-utils.sh
-
-# Native Installation (Recommended for daily use) 
-./install-native.sh
-
-# Build all packages
-./build.sh all
-```
-
-### Platform-Specific Instructions
-
-**Ubuntu/Debian:**
-```bash
-# Native install with auto-dependencies
-./install-native.sh
-
-# Or build Snap package
-./build.sh snap
-```
-
-**Fedora/RHEL/CentOS:**
-```bash
-# Native install with auto-dependencies
-./install-native.sh
-
-# Or use Flatpak
-./build.sh flatpak
-```
-
-**Arch Linux/Manjaro:**
-```bash
-# Native install with auto-dependencies
-./install-native.sh
-
-# Or portable AppImage
-./build.sh appimage
-```
-
-**Any Linux Distribution:**
-```bash
-# Docker (universal)
-./run-security-utils.sh
-
-# Or portable AppImage
-./build.sh appimage && ./build/security-utils-1.0.0-x86_64.AppImage
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with Docker
-5. Submit a pull request
-
-## 📞 Support
-
-- Check the `password_hash_gen_doc.html` file for additional documentation
-- Review the source code for detailed implementation  
-- Test all deployment methods in a safe environment before production use
-- Use the build system to create packages for your target platform
-
-## ⚠️ Security Notice
-
-These tools are designed for legitimate security testing and development purposes. Always ensure you have proper authorization before using these tools on systems you do not own.
+MIT. See `LICENSE` when present in the source distribution.

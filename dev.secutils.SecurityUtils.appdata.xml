@@ -23,7 +23,7 @@
         </ul>
         <p>
             The application runs as a local web server, providing a modern web interface while maintaining 
-            complete data privacy by processing everything locally on your machine.
+            bundled runtime assets and no required outbound connections.
         </p>
     </description>
     
@@ -54,7 +54,7 @@
     <url type="donation">https://github.com/sponsors/compilable</url>
     
     <releases>
-        <release version="1.0.0" date="2024-01-15">
+        <release version="3.0.0" date="2026-11-03">
             <description>
                 <p>Initial release of Security Utilities</p>
                 <ul>
