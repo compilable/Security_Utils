@@ -1,5 +1,5 @@
 # Security: Keep this on a patched PHP release; 8.4.27 fixes CVE-2026-109618 and CVE-2026-109619.
-FROM php:8.4.27-apache@sha256:4af38a0245996e700e20ec211b9f1c44fb789ad8cc7d24c7ea81ff382b641052
+FROM php:8.5.11-apache@sha256:47e6d8849049375e0d19e81f1b391ed88828d4653e0d1b00822185b66b564e8b
 
 # Security: Update system packages first to patch known CVEs including CVE-2025-68973 and CVE-2025-69420
 # Install system dependencies and clean up in single layer
